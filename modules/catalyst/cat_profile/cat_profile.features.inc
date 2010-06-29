@@ -453,3 +453,69 @@ function cat_profile_workflow_features_revert($module) {
  * @} End of "ingroup workflow"
  */
 
+/**
+ * @ingroup homebox
+ * @{
+ */
+
+/**
+ * Implementation of hook_features_export_options().
+ * @author Josh Waihi <josh@catalyst.net.nz>
+ */
+function cat_profile_homebox_features_export_options()  {
+  $rs = db_query('SELECT * FROM {homebox_pages}');
+  while ($row = db_fetch_object($rs)) {
+    $homeboxes[$row->pid] = $row->name;
+  }
+  return $homeboxes;
+}
+
+/**
+ * Implementation of hook_features_export().
+ * @author Josh Waihi <josh@catalyst.net.nz>
+ */
+function cat_profile_homebox_features_export($data, &$export, $module_name = '') {
+  foreach ($data as $pid) {
+    $export['features']['cat_profile_homebox'][$pid] = $pid;
+    $pipe['variable'][] = 'homebox_column_count_' . $pid;
+    $pipe['variable'][] = 'homebox_users_use_colors_' . $pid;
+    $pipe['variable'][] = 'homebox_color_' . $pid . '_0';
+    $pipe['variable'][] = 'homebox_color_' . $pid . '_1';
+    $pipe['variable'][] = 'homebox_color_' . $pid . '_2';
+    $pipe['variable'][] = 'homebox_color_' . $pid . '_3';
+    $pipe['variable'][] = 'homebox_color_' . $pid . '_4';
+    $pipe['variable'][] = 'homebox_color_' . $pid . '_5';
+  }
+  $export['dependencies'][] = 'homebox';
+  return $pipe;
+}
+
+/**
+ * Implementation of hook_features_export_render().
+ * @author Josh Waihi <josh@catalyst.net.nz>
+ */
+function cat_profile_homebox_features_export_render($module_name, $data) {
+  module_load_include('inc', 'cat_profile');
+  $data = cat_profile_export_table('homebox_pages', array('pid' => $data));
+  $code = ' $data = ' . features_var_export($data, '  ') . ';' . PHP_EOL;
+  $code .= ' return $data;';
+  return array('cat_profile_homebox' => $code);
+}
+
+/**
+ * Implementation of hook_features_revert().
+ * @author Josh Waihi <josh@catalyst.net.nz>
+ */
+function cat_profile_homebox_features_revert($module) {
+  $data = module_invoke($module, 'cat_profile_homebox');
+  $pids = array();
+  foreach ($data['homebox_pages'] as $row) {
+    $pids[] = $row['pid'];
+  }
+  cat_profile_data_revert($data, 'homebox_pages', array('wid' => $wids));
+}
+
+/**
+ * @} End of "ingroup homebox"
+ */
+
