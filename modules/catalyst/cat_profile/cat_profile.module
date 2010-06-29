@@ -107,6 +107,15 @@ function cat_profile_features_api() {
       'file' => drupal_get_path('module', 'cat_profile') .'/cat_profile.features.inc',
     );
   }
+  if (module_exists('homebox')) {
+    $features['cat_profile_homebox'] = array(
+      'name' => t('Homebox'),
+      'default_hook' => 'cat_profile_homebox',
+      'default_file' => FEATURES_DEFAULTS_INCLUDED,
+      'default_filename' => 'features.cat_profile.inc',
+      'file' => drupal_get_path('module', 'cat_profile') .'/cat_profile.features.inc',
+    );
+  }
 
   return $features;
 }
