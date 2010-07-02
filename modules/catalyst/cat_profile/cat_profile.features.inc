@@ -478,6 +478,7 @@ function cat_profile_homebox_features_export_options()  {
 function cat_profile_homebox_features_export($data, &$export, $module_name = '') {
   foreach ($data as $pid) {
     $export['features']['cat_profile_homebox'][$pid] = $pid;
+    $pipe['cat_profile_url_aliases'][] = 'homebox/' . $pid;
     $pipe['variable'][] = 'homebox_column_count_' . $pid;
     $pipe['variable'][] = 'homebox_users_use_colors_' . $pid;
     $pipe['variable'][] = 'homebox_color_' . $pid . '_0';
