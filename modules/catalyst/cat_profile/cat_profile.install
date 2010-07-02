@@ -24,6 +24,13 @@ function cat_profile_schema_blocks_alter(&$schema) {
 }
 
 /**
+ * Define available static fields in {url_alias}.
+ */
+function cat_profile_schema_url_alias_alter(&$schema) {
+  $schema['cat_profile_static_fields'] = array('src', 'dst', 'language');
+}
+
+/**
  * Define available static fields in {term_data}.
  */
 function cat_profile_schema_term_data_alter(&$schema) {
