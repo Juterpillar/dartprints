@@ -80,6 +80,50 @@ function cat_profile_blocks_features_revert($module) {
 }
 
 /**
+ * @} End of "ingroup url_alias".
+ */
+
+/**
+ * Implementation of hook_features_export().
+ * @author Josh Waihi <josh@catalyst.net.nz>
+ */
+function cat_profile_url_aliases_features_export($data, &$export, $module_name = '') {
+  foreach ($data as $url) {
+    $export['features']['cat_profile_url_aliases'][$url] = $url;
+    list($theme, $module, $delta) = explode(CAT_PROFILE_FEATURES_DELIMITER, $key);
+  }
+  $export['dependencies'][] = 'path';
+}
+
+/**
+ * Implementation of hook_features_export_render().
+ * @author Josh Waihi <josh@catalyst.net.nz>
+ */
+function cat_profile_url_aliases_features_export_render($module_name, $data) {
+  module_load_include('inc', 'cat_profile');
+  $export = cat_profile_export_table('url_alias', array('src' => $data));
+  $code = '  $data = ' . features_var_export($export, '  ') . ';' . PHP_EOL;
+  $code .= '  return $data;';
+  return array('cat_profile_url_aliases' => $code);
+}
+
+/**
+ * Implementation of hook_features_revert().
+ * @author Josh Waihi <josh@catalyst.net.nz>
+ */
+function cat_profile_url_alias_features_revert($module) {
+  $data = module_invoke($module, 'cat_profile_url_aliases');
+  foreach ($data['url_alias'] as $row) {
+    cat_profile_data_revert($data, 'url_alias', array('src' => $row['src']));
+  }
+}
+
+/**
+ * @ingroup url_alias
+ * @{
+ */
+
+/**
  * @} End of "ingroup blocks".
  */
 
