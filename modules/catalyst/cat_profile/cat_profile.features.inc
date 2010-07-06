@@ -45,6 +45,7 @@ function cat_profile_blocks_features_export_options()  {
  */
 function cat_profile_blocks_features_export($data, &$export, $module_name = '') {
   foreach ($data as $key => $title) {
+    if (is_numeric($key)) $key = $title;
     $export['features']['cat_profile_blocks'][$key] = $title;
     list($theme, $module, $delta) = explode(CAT_PROFILE_FEATURES_DELIMITER, $key);
     $export['dependencies'][$module] = $module;
