@@ -513,7 +513,7 @@ function cat_profile_homebox_features_revert($module) {
   foreach ($data['homebox_pages'] as $row) {
     $pids[] = $row['pid'];
   }
-  cat_profile_data_revert($data, 'homebox_pages', array('wid' => $wids));
+  cat_profile_data_revert($data, 'homebox_pages', array('pid' => $pids));
 }
 
 /**
