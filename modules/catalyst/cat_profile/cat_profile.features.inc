@@ -81,7 +81,12 @@ function cat_profile_blocks_features_revert($module) {
 }
 
 /**
- * @} End of "ingroup url_alias".
+ * @} End of "ingroup blocks".
+ */
+
+/**
+ * @ingroup url_alias
+ * @{
  */
 
 /**
@@ -120,12 +125,7 @@ function cat_profile_url_alias_features_revert($module) {
 }
 
 /**
- * @ingroup url_alias
- * @{
- */
-
-/**
- * @} End of "ingroup blocks".
+ * @} End of "ingroup url_alias".
  */
 
 /**
