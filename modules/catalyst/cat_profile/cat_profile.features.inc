@@ -48,9 +48,14 @@ function cat_profile_blocks_features_export($data, &$export, $module_name = '') 
     if (is_numeric($key)) $key = $title;
     $export['features']['cat_profile_blocks'][$key] = $title;
     list($theme, $module, $delta) = explode(CAT_PROFILE_FEATURES_DELIMITER, $key);
+    if ($module == 'block') {
+      $pipe['cat_profile_boxes'][] = $delta;
+    }
     $export['dependencies'][$module] = $module;
   }
   $export['dependencies'][] = 'block';
+
+  return $pipe;
 }
 
 /**
@@ -62,7 +67,13 @@ function cat_profile_blocks_features_export_render($module_name, $data) {
   $export = array();
   foreach ($data as $key) {
     list($theme, $module, $delta) = explode(CAT_PROFILE_FEATURES_DELIMITER, $key);
-    $export = array_merge($export, cat_profile_export_table('blocks', array('theme' => $theme, 'module' => $module, 'delta' => $delta)));
+    if (isset($export['blocks'])) {
+      $result = cat_profile_export_table('blocks', array('theme' => $theme, 'module' => $module, 'delta' => $delta));
+      $export['blocks'] = array_merge((array) $export['blocks'], $result['blocks']);
+    }
+    else {
+      $export = cat_profile_export_table('blocks', array('theme' => $theme, 'module' => $module, 'delta' => $delta));
+    }
   }
   $code = '  $data = ' . features_var_export($export, '  ') . ';' . PHP_EOL;
   $code .= '  return $data;';
@@ -82,6 +93,57 @@ function cat_profile_blocks_features_revert($module) {
 
 /**
  * @} End of "ingroup blocks".
+ */
+
+/**
+ * @ingroup boxes.
+ * @{
+ */
+
+/**
+ * Implementation of hook_features_export().
+ * @author Elliot Pahl <elliot@catalyst.net.nz>
+ */
+function cat_profile_boxes_features_export($data, &$export, $module_name = '') {
+  foreach ($data as $key) {
+    $export['features']['cat_profile_boxes'][$key] = $key;
+  }
+}
+
+/**
+ * Implementation of hook_features_export_render().
+ * @author Elliot Pahl <elliot@catalyst.net.nz>
+ */
+function cat_profile_boxes_features_export_render($module_name, $data) {
+  module_load_include('inc', 'cat_profile');
+  $export = array();
+  foreach ($data as $key) {
+    if (isset($export['boxes'])) {
+      $result = cat_profile_export_table('boxes', array('bid' => $key));
+      $export['boxes'] = array_merge((array) $export['boxes'], $result['boxes']);
+    }
+    else {
+      $export = cat_profile_export_table('boxes', array('bid' => $key));
+    }
+  }
+  $code = '  $data = ' . features_var_export($export, '  ') . ';' . PHP_EOL;
+  $code .= '  return $data;';
+  return array('cat_profile_boxes' => $code);
+}
+
+/**
+ * Implementation of hook_features_revert().
+ * @author Elliot Pahl <elliot@catalyst.net.nz>
+ */
+function cat_profile_boxes_features_revert($module) {
+  $data = module_invoke($module, 'cat_profile_boxes');
+  foreach ($data['boxes'] as $row) {
+    cat_profile_data_revert($data, 'boxes', array('bid' => $row['bid']));
+  }
+}
+
+/**
+ * @} End of "ingroup boxes".
  */
 
 /**

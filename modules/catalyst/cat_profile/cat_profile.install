@@ -21,6 +21,13 @@ function cat_profile_schema_blocks_alter(&$schema) {
 }
 
 /**
+ * Define available static fields in {boxes}.
+ */
+function cat_profile_schema_boxes_alter(&$schema) {
+  $schema['cat_profile_static_fields'] = array('bid', 'body', 'info', 'format');
+}
+
+/**
  * Define available static fields in {url_alias}.
  */
 function cat_profile_schema_url_alias_alter(&$schema) {
