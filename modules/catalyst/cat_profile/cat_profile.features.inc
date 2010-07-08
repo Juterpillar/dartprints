@@ -499,6 +499,12 @@ function cat_profile_homebox_features_export($data, &$export, $module_name = '')
 function cat_profile_homebox_features_export_render($module_name, $data) {
   module_load_include('inc', 'cat_profile');
   $data = cat_profile_export_table('homebox_pages', array('pid' => $data));
+  foreach ($data['homebox_pages'] as &$row) {
+    $rs = db_query('SELECT d.region, d.movable, d.status, d.open, d.weight, b.module, b.delta, b.theme FROM {blocks} b INNER JOIN {homebox_default} d on b.bid = d.bid WHERE d.pid = %d ORDER by b.theme, b.module, b.delta', $row['pid']);
+    while ($block = db_fetch_array($rs)) {
+      $row['blocks'][] = $block;
+    }
+  }
   $code = ' $data = ' . features_var_export($data, '  ') . ';' . PHP_EOL;
   $code .= ' return $data;';
   return array('cat_profile_homebox' => $code);
