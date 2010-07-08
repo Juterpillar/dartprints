@@ -147,8 +147,5 @@ function cat_profile_schema_homebox_default_alter(&$schema) {
 function cat_profile_schema_homebox_pages_alter(&$schema) {
   // All fields in this table can be made static.
   $schema['cat_profile_static_fields'] = array_keys($schema['fields']);
-  $schema['cat_profile_export'] = array(
-    'homebox_default' => 'pid',
-  );
 }
 
