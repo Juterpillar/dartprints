@@ -582,13 +582,13 @@ function cat_profile_variable_delete($name) {
  */
 function cat_profile_restore_row($table, $row, $keys = array()) {
   $schema = drupal_get_schema($table);
+  $schema_fields = array_keys($schema['fields']);
 
-  // The table being restored must support cat_profile.
-  if (!isset($schema['cat_profile_static_fields'])) {
-    return FALSE;
+  if (isset($schema['cat_profile_export_exclude'])) {
+    $schema_fields = array_diff($schema_fields, $schema['cat_profile_export_exclude']);
   }
   $fields = array();
-  foreach ($schema['cat_profile_static_fields'] as $field) {
+  foreach ($schema_fields as $field) {
     if (isset($row[$field])) {
       $fields[$field] = $row[$field];
     }
