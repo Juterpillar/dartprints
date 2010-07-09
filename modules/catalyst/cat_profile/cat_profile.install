@@ -16,37 +16,26 @@ function cat_profile_schema_alter(&$schemas) {
  *  Core  *
  *********/
 
-/**
- * Define available static fields in {blocks}.
- */
 function cat_profile_schema_blocks_alter(&$schema) {
-  $schema['cat_profile_static_fields'] = array('module', 'theme', 'delta', 'status', 'weight', 'region', 'custom', 'throttle', 'visibility', 'pages', 'title', 'cache');
+  $schema['cat_profile_export_exclude'] = array('bid');
 }
 
 /**
  * Define available static fields in {url_alias}.
  */
 function cat_profile_schema_url_alias_alter(&$schema) {
-  $schema['cat_profile_static_fields'] = array('src', 'dst', 'language');
+  $schema['cat_profile_export_exclude'] = array('pid');
 }
 
 /**
  * Define available static fields in {term_data}.
  */
 function cat_profile_schema_term_data_alter(&$schema) {
-  $schema['cat_profile_static_fields'] = array_keys($schema['fields']);
   $schema['cat_profile_export'] = array(
     'term_hierarchy' => 'tid',
     'term_synonym' => 'tid',
     //'term_relation' => // FIXME: See cat_profile_schema_term_relation_alter()
   );
-}
-
-/**
- * Define available static fields in {term_hierarchy}.
- */
-function cat_profile_schema_term_hierarchy_alter(&$schema) {
-  $schema['cat_profile_static_fields'] = array_keys($schema['fields']);
 }
 
 /**
@@ -63,25 +52,17 @@ function cat_profile_schema_term_relation_alter(&$schema) {
  * Define available static fields in {term_synonym}.
  */
 function cat_profile_schema_term_synonym_alter(&$schema) {
-  $schema['cat_profile_static_fields'] = array('tid', 'name');
+  $schema['cat_profile_export_exclude'] = array('tsid');
 }
 
 /**
  * Define available static fields in {vocabulary}.
  */
 function cat_profile_schema_vocabulary_alter(&$schema) {
-  $schema['cat_profile_static_fields'] = array_keys($schema['fields']);
   $schema['cat_profile_export'] = array(
     'term_data' => 'vid',
     'vocabulary_node_types' => 'vid',
   );
-}
-
-/**
- *  Define available static fields in {vocabulary_node_types}.
- */
-function cat_profile_schema_vocabulary_node_types_alter(&$schema) {
-  $schema['cat_profile_static_fields'] = array_keys($schema['fields']);
 }
 
 /***********
@@ -92,8 +73,6 @@ function cat_profile_schema_vocabulary_node_types_alter(&$schema) {
  * Define available static fields in {workflows}.
  */
 function cat_profile_schema_workflows_alter(&$schema) {
-  // All fields in this table can be made static.
-  $schema['cat_profile_static_fields'] = array_keys($schema['fields']);
   $schema['cat_profile_export'] = array(
     'workflow_states' => 'wid',
     'workflow_type_map' => 'wid',
@@ -104,48 +83,19 @@ function cat_profile_schema_workflows_alter(&$schema) {
  * Define available static fields in {workflow_states}.
  */
 function cat_profile_schema_workflow_states_alter(&$schema) {
-  // All fields in this table can be made static.
-  $schema['cat_profile_static_fields'] = array_keys($schema['fields']);
   $schema['cat_profile_export'] = array(
     'workflow_transitions' => 'sid',
   );
 }
 
 /**
- * Define available static fields in {workflow_transitions}.
- */
-function cat_profile_schema_workflow_transitions_alter(&$schema) {
-  // All fields in this table can be made static.
-  $schema['cat_profile_static_fields'] = array_keys($schema['fields']);
-}
-
-/**
  * Define available static fields in {workflow_type_map}.
  */
 function cat_profile_schema_workflow_type_map_alter(&$schema) {
-  // All fields in this table can be made static.
-  $schema['cat_profile_static_fields'] = array_keys($schema['fields']);
-
   // Schema requires primary keys to be able to usefully be able to
   // update the data.
   if (!isset($schema['primary key'])) {
     $schema['primary key'] = array('type', 'wid');
   }
-}
-
-/**
- * Define available static fields in {homebox_default}.
- */
-function cat_profile_schema_homebox_default_alter(&$schema) {
-  // All fields in this table can be made static.
-  $schema['cat_profile_static_fields'] = array_keys($schema['fields']);
-}
-
-/**
- * Define available static fields in {homebox_pages}.
- */
-function cat_profile_schema_homebox_pages_alter(&$schema) {
-  // All fields in this table can be made static.
-  $schema['cat_profile_static_fields'] = array_keys($schema['fields']);
 }
 
