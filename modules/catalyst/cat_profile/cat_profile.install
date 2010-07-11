@@ -43,7 +43,7 @@ function cat_profile_schema_term_data_alter(&$schema) {
  */
 /*
 function cat_profile_schema_term_relation_alter(&$schema) {
-  $schema['cat_profile_static_fields'] = array('tid1', 'tid2');
+  #$schema['cat_profile_static_fields'] = array('tid1', 'tid2');
   // FIXME: Currently unable to export foreign keys with different names
 }
 //*/
@@ -98,4 +98,3 @@ function cat_profile_schema_workflow_type_map_alter(&$schema) {
     $schema['primary key'] = array('type', 'wid');
   }
 }
-

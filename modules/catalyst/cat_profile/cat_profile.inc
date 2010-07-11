@@ -637,7 +637,8 @@ function cat_profile_restore_row($table, $row, $keys = array()) {
  */
 function cat_profile_static_fields($table) {
   $schema = drupal_get_schema($table);
-  return isset($schema['cat_profile_static_fields']) ? $schema['cat_profile_static_fields'] : array();
+  $fields = array_keys($schema['fields']);
+  return isset($schema['cat_profile_export_exclude']) ? array_diff($fields, $schema['cat_profile_export_exclude']) : $fields;
 }
 
 /**
@@ -687,10 +688,8 @@ function cat_profile_data_revert($static_data, $table, $conditions) {
  */
 function cat_profile_export_table($table, $conditions = array()) {
   $schema = drupal_get_schema($table);
-  if (!isset($schema['cat_profile_static_fields'])) {
-    return array();
-  }
-  $query = 'SELECT ' . implode(', ', $schema['cat_profile_static_fields']) . ' FROM {' . $table . '} %where% ORDER BY ' . implode(', ', $schema['cat_profile_static_fields']);
+  $fields = cat_profile_static_fields($table);
+  $query = 'SELECT ' . implode(', ', $fields) . ' FROM {' . $table . '} %where% ORDER BY ' . implode(', ', $fields);
   if (!empty($conditions)) {
     $where = $args = array();
     foreach ($conditions as $key => $value) {
