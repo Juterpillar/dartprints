@@ -49,7 +49,7 @@ function cat_profile_blocks_features_export($data, &$export, $module_name = '') 
     $export['features']['cat_profile_blocks'][$key] = $title;
     list($theme, $module, $delta) = explode(CAT_PROFILE_FEATURES_DELIMITER, $key);
     if ($module == 'block') {
-      $pipe['cat_profile_boxes'][] = $delta;
+      $pipe['cat_profile_boxes'][$delta] = $delta;
     }
     $export['dependencies'][$module] = $module;
   }

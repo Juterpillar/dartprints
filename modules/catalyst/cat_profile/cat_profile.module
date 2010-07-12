@@ -127,16 +127,3 @@ function cat_profile_features_api() {
   return $features;
 }
 
-/**
- * Implementation of hook_features_export_alter
- *
- * Add addional exports not added by features modules to certain components.
- * @author Josh Waihi <josh@catalyst.net.nz>
- */
-function cat_profile_features_export_alter(&$export, $module_name) {
-  if (module_exists('pathauto') && isset($export['node'])) {
-    foreach ($export['node'] as $key => $value) {
-      $export['variable']['pathauto_node_' . $key . '_pattern'] = 'pathauto_node_' . $key . '_pattern';
-    }
-  }
-}
