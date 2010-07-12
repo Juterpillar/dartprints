@@ -663,13 +663,18 @@ function cat_profile_data_revert($static_data, $table, $conditions) {
   // Secondly, look through the dynamic data and find any added
   // rows that are not in the static rows. DELETE them.
   foreach ($dynamic_data as $table => $rows) {
-    foreach ($rows as $r) {
+    foreach ($rows as $i => $r) {
       $remove = TRUE;
-      foreach ($static_data[$table] as $row) {
+      foreach ($static_data[$table] as $idx => $row) {
         $diff = array_diff_assoc($r, $row);
         // If we find an identical row, then no need to remove it
         // and no need to continue looking.
-        if (!($remove = !empty($diff))) break;
+        if (empty($diff)) {
+          $remove = FALSE;
+          unset($static_data[$table][$idx]);
+          unset($dynamic_data[$table][$i]);
+          break;
+        }
       }
       if ($remove) {
         $schema = drupal_get_schema($table);

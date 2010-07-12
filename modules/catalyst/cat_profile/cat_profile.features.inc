@@ -515,12 +515,27 @@ function cat_profile_homebox_features_export_render($module_name, $data) {
  * @author Josh Waihi <josh@catalyst.net.nz>
  */
 function cat_profile_homebox_features_revert($module) {
+  _block_rehash();
   $data = module_invoke($module, 'cat_profile_homebox');
-  $pids = array();
-  foreach ($data['homebox_pages'] as $row) {
+  $pids = $block_data = $bids = array();
+  foreach ($data['homebox_pages'] as &$row) {
     $pids[] = $row['pid'];
+    foreach ($row['blocks'] as $block) {
+      if ($bid = db_result(db_query("SELECT bid FROM {blocks} WHERE module = '%s' AND delta = '%s' AND theme = '%s'", $block['module'], $block['delta'], $block['theme']))) {
+        unset($block['module']);
+        unset($block['delta']);
+        unset($block['theme']);
+        $block['bid'] = $bid;
+        $block['pid'] = $row['pid'];
+        $bids[] = $bid;
+        $block_data['homebox_default'][] = $block;
+      }
+    }
+    unset($row['blocks']);
   }
   cat_profile_data_revert($data, 'homebox_pages', array('pid' => $pids));
+  db_query('DELETE FROM {homebox_default} WHERE pid IN (' . db_placeholders($pids) . ')', $pids);
+  cat_profile_data_revert($block_data, 'homebox_default', array('bid' => $bids));
 }
 
 /**
