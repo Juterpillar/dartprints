@@ -16,10 +16,6 @@ function cat_profile_schema_alter(&$schemas) {
  *  Core  *
  *********/
 
-function cat_profile_schema_blocks_alter(&$schema) {
-  $schema['cat_profile_export_exclude'] = array('bid');
-}
-
 /**
  * Define available static fields in {url_alias}.
  */
