@@ -282,3 +282,101 @@ function cat_profile_homebox_features_revert($module) {
  * @} End of "ingroup homebox"
  */
 
+/**
+ * implementation of hook_features_export_options()
+ * @author Josh Schmidt <joshs@catalyst.net.nz>
+ */
+function cat_profile_ckeditor_features_export_options() {
+  $results = db_query("SELECT name FROM {ckeditor_settings}");
+  $settings = array();
+  while ($row = db_fetch_object($results)) {
+    $settings[$row->name] = $row->name;
+  }
+  return $settings;
+}
+
+/**
+ * implementation of hook_features_export()
+ * @author Josh Schmidt <joshs@catalyst.net.nz>
+ */
+function cat_profile_ckeditor_features_export($data, &$export, $module_name = '') {
+  foreach ($data as $setting) {
+    $export['features']['cat_profile_ckeditor'][$setting] = $setting;
+  }
+  $export['dependencies'][] = 'ckeditor';
+}
+
+/**
+ * implementation of hook_features_export_render()
+ * @author Josh Schmidt <joshs@catalyst.net.nz>
+ */
+function cat_profile_ckeditor_features_export_render($module_name, $data) {
+  module_load_include('inc', 'cat_profile');
+  $data = cat_profile_export_table('ckeditor_settings', array('name' => $data));
+  foreach ($data['ckeditor_settings'] as &$value) {
+    $value['settings'] = unserialize($value['settings']);
+    //List the roles this setting is assigned to
+    $result = db_query("SELECT r.name FROM {ckeditor_role} ckr INNER JOIN {role} r ON ckr.rid=r.rid WHERE ckr.name = '%s'", $value['name']);
+    $roles = array();
+    while ($row = db_fetch_object($result)) {
+      $roles[] = $row->name;
+    }
+    if (!empty($roles)) {
+      $value['roles'] = $roles;
+    }
+  }
+  $code = ' $data = ' . features_var_export($data, '  ') . ';' . PHP_EOL;
+  $code .= ' return $data;';
+  return array('cat_profile_ckeditor' => $code);
+}
+
+/**
+ * implementation of hook_features_revert()
+ * @author Josh Schmidt <joshs@catalyst.net.nz>
+ */
+function cat_profile_ckeditor_features_revert($module) {
+  $data = module_invoke($module, 'cat_profile_ckeditor');
+  $names = array();
+  $ck_roles = array();
+  foreach ($data['ckeditor_settings'] as &$row) {
+    if (isset($row['roles'])) {
+      $ck_roles[$row['name']] = $row['roles'];
+      unset($row['roles']);
+    }
+    $names[] = $row['name'];
+    $row['settings'] = serialize($row['settings']);
+  }
+  //drupal_set_message('<pre>'.print_r($names, true).print_r($data, true).'</pre>');
+  cat_profile_data_revert($data, 'ckeditor_settings', array('name' => $names));
+
+  //Assigning roles to settings
+  $result = db_query("SELECT rid,name FROM {role}");
+  $drupal_roles = array();
+  while ($row = db_fetch_object($result)) {
+    $drupal_roles[strtolower($row->name)] = $row->rid;
+  }
+
+  foreach ($ck_roles as $setting=>$roles) {
+    foreach ($roles as $role) {
+      $role = strtolower($role);
+      if (isset($drupal_roles[$role])) {
+        $rid = $drupal_roles[$role];
+        //First check to see if already assigned
+        $assigned = db_result(db_query("SELECT COUNT(*) FROM {ckeditor_role} WHERE rid = %d AND name = '%s'", $rid, $setting));
+        if (!$assigned) {
+          db_query("INSERT INTO {ckeditor_role} VALUES('%s', %d)", $setting, $rid);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * @ingroup ckeditor
+ * @{
+ */
+
+
+/**
+ * @} End of "ingroup ckeditor"
+ */
