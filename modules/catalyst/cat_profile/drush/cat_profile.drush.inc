@@ -40,5 +40,11 @@ function cat_profile_debian_postinst() {
       $output .= '}' . PHP_EOL;
     }
   }
+  if (module_exists('boost')) {
+    $output .= '    $cache_link = WEBROOT . "/cache";' . PHP_EOL;
+    $output .= '    if (!is_link($cache_link)) {' . PHP_EOL;
+    $output .= '      symlink("/var/lib/sitedata/" . PACKAGE_NAME . "/cache", $cache_link);' . PHP_EOL;
+    $output .= '    }' . PHP_EOL;
+  }
   return $output;
 }
