@@ -72,6 +72,15 @@ function cat_profile_dh_make_prebuild($dir) {
   return array($ini_file => 'info.ini');
 }
 
+/**
+ * Implementation of hook_debian_install().
+ */
+function cat_profile_debian_install() {
+  return array(
+    array('debian/info.ini', 'etc/' . drush_get_option('dh-package')),
+  );
+}
+
 if (!function_exists('write_ini_file')) {
     function write_ini_file($assoc_arr, $path, $has_sections=FALSE) {
         $content = "";
