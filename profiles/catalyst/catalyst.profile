@@ -12,9 +12,9 @@ function catalyst_profile_modules() {
     // Default Drupal modules.
     'comment', 'help', 'menu', 'taxonomy', 'dblog',
     // Contributed modules
-    'admin_menu',
+    'admin',
     // Catalyst tracking
-    'drupal_status', 'catalyst_status',
+    'drupal_status', 'catalyst_status', 'cat_profile'
   );
 
   return $modules;

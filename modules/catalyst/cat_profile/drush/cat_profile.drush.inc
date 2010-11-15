@@ -63,6 +63,13 @@ function cat_profile_dh_make_prebuild($dir) {
   if ($vc_engine = drush_pm_include_version_control(DRUPAL_ROOT)) {
     if ($vc_engine->name() == 'git') {
       $ini['git']['commit'] = $vc_engine->hash();
+      $gitconfig = parse_ini_file(DRUPAL_ROOT . '/.git/config', TRUE);
+      foreach ($gitconfig => $section => $config) {
+        if (!preg_match_all('/remote "([^"]*)"/', $section, $matches)) {
+          continue;
+        }
+        drush_print_r($matches);return;
+      }
     }
   }
   if (drush_get_option('wrms', FALSE)) {
