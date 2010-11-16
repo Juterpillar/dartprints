@@ -23,6 +23,27 @@ function cat_profile_install_modules($modules, &$res) {
 }
 
 /**
+ * Install one or more themes (ignoring dependencies!)
+ *
+ * @param mixed $themes either a single string theme name, or an array of theme names
+ * @param array $res your res array, by reference. We'll write in an update_sql()-esqe entry for each module
+ * @return array the last array added to your &$res
+ * @author Neil Bertram <neil@catalyst.net.nz>
+ */
+function cat_profile_install_themes($themes, &$res) {
+  system_theme_data(); // search for any new modules
+  $themes = (array)$themes;
+  foreach ($themes as $theme) {
+    db_query("UPDATE {system} SET status = 1 WHERE type = 'theme' AND name = '%s'", $theme);
+    $res[] = array(
+      'query' => 'Installing '.$theme.' theme',
+      'success' => db_result(db_query("SELECT status FROM {system} WHERE type='theme' AND name='%s'", $theme))
+    );
+  }
+  return $res;
+}
+
+/**
  * Remove one or more modules (ignoring dependencies)
  *
  * @param mixed $modules either a single string module name, or an array of module names
