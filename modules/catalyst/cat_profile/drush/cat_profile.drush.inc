@@ -48,3 +48,91 @@ function cat_profile_debian_postinst() {
   }
   return $output;
 }
+<<<<<<< HEAD:modules/catalyst/cat_profile/drush/cat_profile.drush.inc
+=======
+
+/**
+ * Implementation of hook_dh_make_prebuild().
+ */
+function cat_profile_dh_make_prebuild($dir) {
+  $ini_file = $dir. '/info.ini';
+  if (is_file($ini_file)) {
+    $ini = parse_ini_file($ini_file, TRUE);
+  }
+  else {
+    $ini = array();
+  }
+  if ($vc_engine = drush_pm_include_version_control(DRUPAL_ROOT)) {
+    if ($vc_engine->name() == 'git') {
+      $ini['git']['commit'] = $vc_engine->hash();
+      $gitconfig = parse_ini_file(DRUPAL_ROOT . '/.git/config', TRUE);
+      foreach ($gitconfig => $section => $config) {
+        if (!preg_match_all('/remote "([^"]*)"/', $section, $matches)) {
+          continue;
+        }
+        drush_print_r($matches);return;
+      }
+    }
+  }
+  if (drush_get_option('wrms', FALSE)) {
+    $ini['wrms']['wr'] = drush_get_option('wrms', array());
+  }
+  write_ini_file($ini, $ini_file, TRUE);
+  return array($ini_file => 'info.ini');
+}
+
+/**
+ * Implementation of hook_debian_install().
+ */
+function cat_profile_debian_install() {
+  return array(
+    array('debian/info.ini', 'etc/' . drush_get_option('dh-package')),
+  );
+}
+
+if (!function_exists('write_ini_file')) {
+    function write_ini_file($assoc_arr, $path, $has_sections=FALSE) {
+        $content = "";
+
+        if ($has_sections) {
+            foreach ($assoc_arr as $key=>$elem) {
+                $content .= "[".$key."]\n";
+                foreach ($elem as $key2=>$elem2)
+                {
+                    if(is_array($elem2))
+                    {
+                        for($i=0;$i<count($elem2);$i++)
+                        {
+                            $content .= $key2."[] = \"".$elem2[$i]."\"\n";
+                        }
+                    }
+                    else if($elem2=="") $content .= $key2." = \n";
+                    else $content .= $key2." = \"".$elem2."\"\n";
+                }
+            }
+        }
+        else {
+            foreach ($assoc_arr as $key=>$elem) {
+                if(is_array($elem))
+                {
+                    for($i=0;$i<count($elem);$i++)
+                    {
+                        $content .= $key2."[] = \"".$elem[$i]."\"\n";
+                    }
+                }
+                else if($elem=="") $content .= $key2." = \n";
+                else $content .= $key2." = \"".$elem."\"\n";
+            }
+        }
+
+        if (!$handle = fopen($path, 'w')) {
+            return false;
+        }
+        if (!fwrite($handle, $content)) {
+            return false;
+        }
+        fclose($handle);
+        return true;
+    }
+}
+>>>>>>> master:modules/catalyst/cat_profile/drush/cat_profile.drush.inc
