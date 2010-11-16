@@ -672,7 +672,7 @@ function cat_profile_data_revert($static_data, $table, $conditions) {
     // Firstly, restore (UPDATE) or create (INSERT) any missing
     // or out dated rows.
     foreach ($rows as $row) {
-      cat_profile_restore_row($table_name, $row);
+      cat_profile_restore_row($table_name, $row, array_keys($conditions));
     }
     // In PostgreSQL, we could potentially upset table
     // sequences so we should set them to there current
