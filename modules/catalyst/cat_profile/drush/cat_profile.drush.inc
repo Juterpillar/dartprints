@@ -68,9 +68,7 @@ function cat_profile_dh_make_prebuild($dir) {
         if (!preg_match_all('/remote "([^"]*)"/', $section, $matches)) {
           continue;
         }
-        $matches[1][0];
-        drush_print_r($config);
-        drush_print_r($matches);return;
+        $ini['git']['remote "' . $matches[1][0] . '"'] = $config['url'];
       }
     }
   }
@@ -88,8 +86,9 @@ function nagios_nrpe_debian_create() {
   // Nagios Support.
   // Generate a Nagios nrpe.cfg format PHP template.
   $checks = (array) module_invoke_all('nagios_nrpe_checks');
+  $project = drush_get_option('dh-project');
   foreach ((array) module_invoke_all('nagios_nrpe_checks') as $check => $desc) {
-    $commands['__PACKAGE___' . $check] = '/usr/bin/drush -r /var/www/__PACKAGE__ nrpe ' . $check;
+    $commands[$project . '_' . $check] = '/usr/bin/drush -r /var/www/__PACKAGE__ nrpe ' . $check;
   }
   $file = '';
   foreach ($commands as $name => $cmd) {
