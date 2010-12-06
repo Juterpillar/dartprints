@@ -100,6 +100,22 @@ function nagios_nrpe_debian_create() {
 }
 
 /**
+ * Implementation of hook_debian_dirs().
+ */
+function nagios_nrpe_debian_dirs() {
+  return 'etc/nagios/nrpe.d';
+}
+
+/**
+ * Implementation of hook_debian_install().
+ */
+function nagios_nrpe_debian_install() {
+  return array(
+    array('debian/nrpe.cfg', 'etc/nagios/nrpe.d/' . drush_get_option('dh-package')),
+  );
+}
+
+/**
  * Implementation of hook_debian_install().
  */
 function cat_profile_debian_install() {
