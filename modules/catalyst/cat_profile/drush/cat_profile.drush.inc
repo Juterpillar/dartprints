@@ -68,6 +68,8 @@ function cat_profile_dh_make_prebuild($dir) {
         if (!preg_match_all('/remote "([^"]*)"/', $section, $matches)) {
           continue;
         }
+        $matches[1][0];
+        drush_print_r($config);
         drush_print_r($matches);return;
       }
     }
