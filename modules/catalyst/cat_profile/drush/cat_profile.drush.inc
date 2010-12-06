@@ -109,7 +109,7 @@ function nagios_nrpe_debian_postinst() {
   $code .= '    if (deb_shell_exec("dpkg -l | grep \'ii  nagios-nrpe-server\'")) {' . PHP_EOL;
   $code .= '      $nagios_cfg = "/etc/nagios/nrpe.d/" . PACKAGE_NAME;' . PHP_EOL;
   $code .= '      if ((is_dir("/etc/nagios/nrpe.d") || mkdir("/etc/nagios/nrpe.d")) && (!is_link($nagios_cfg) && !is_file($nagios_cfg))) {' . PHP_EOL;
-  $code .= '        symlink("/etc/drupal-site-" . PACKAGE_NAME . "/nrpe.cfg", "/etc/nagios/nrpe.d/" . PACKAGE_NAME);' . PHP_EOL;
+  $code .= '        symlink("/etc/" . PACKAGE_NAME . "/nrpe.cfg", $nagios_cfg);' . PHP_EOL;
   $code .= '      }' . PHP_EOL;
   $code .= '    }' . PHP_EOL;
 
