@@ -38,7 +38,30 @@ function cat_profile_menu() {
       'page callback' => 'drupal_get_form',
       'page arguments' => array('cat_profile_var_dump_form'),
       'file' => 'cat_profile.inc'
-    )
+    ),
+    'admin/settings/mail-redirect' => array(
+      'title' => 'Mail Redirect Options',
+      'description' => 'Configure mail redirection for staging sites.',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('cat_profile_mail_redirect_settings_form'),
+      'access arguments' => array('administer site configuration'),
+      'file' => 'cat_profile.inc',
+    ),
+  );
+}
+
+/**
+ * Implementation of glorious hook_theme for mail redirect shenanigans
+ * @author Stuart McDonald after Rohin Knight
+ */
+function cat_profile_theme() {
+  return array(
+    'mailkey_table' => array(
+      'arguments' => array(
+        'element' => null,
+      ),
+      'file' => 'cat_profile.theme.inc',
+    ),
   );
 }
 
@@ -138,5 +161,75 @@ function cat_profile_features_export_alter(&$export, $module_name) {
     foreach ($export['node'] as $key => $value) {
       $export['variable']['pathauto_node_' . $key . '_pattern'] = 'pathauto_node_' . $key . '_pattern';
     }
+  }
+}
+
+/**
+ * Implementation of hook_elements
+ *
+ * Intended to provide custom form element for mail redirect configuration page
+ *
+ * @author Stuart McDonald after Rohin Knight
+ */
+function cat_profile_elements() {
+  $type['mailkey_table'] = array(
+    '#input'=>TRUE,
+    '#process'=>array(
+      'expand_mailkey_table'=>array(),
+    )
+  );
+  return $type;
+}
+
+/**
+ * Implementation of hook_mail_alter()
+ *
+ * @author Stuart McDonald after Rohin Knight
+ */
+function cat_profile_mail_alter(&$message) {
+  module_load_include('inc', 'cat_profile', 'mail_redirect');
+
+  $mailkey = $message['id'];
+  $to = $message['to'];
+
+  $mailkey_rules = unserialize(variable_get('mail_redirect_rules', ''));
+
+  if (!isset($mailkey_rules[$mailkey])) { // IF mailkey does not exist, add it to rule list
+    $mailkey_rules[$mailkey] = variable_get('mail_redirect_default_rule', MAIL_REDIRECT_DEFAULT_RULE);
+    variable_set('mail_redirect_rules', serialize($mailkey_rules));
+  }
+
+  switch (variable_get('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_DISABLED)) {
+    case MAIL_REDIRECT_OVERRIDE_DISABLED:
+      switch ($mailkey_rules[$mailkey]) {
+        case MAIL_REDIRECT_ALLOW:
+           _mail_redirect_allow($message);
+          break;
+
+        case MAIL_REDIRECT_BLOCK:
+           _mail_redirect_block($mailkey, $to);
+          break;
+
+        case MAIL_REDIRECT_REDIRECT:
+          _mail_redirect_redirect($message, _mail_redirect_get_redirect_email());
+          break;
+
+        case MAIL_REDIRECT_CUSTOM_REDIRECT:
+          _mail_redirect_redirect($message, _mail_redirect_get_redirect_email($mailkey));
+          break;
+      }
+      break;
+
+    case MAIL_REDIRECT_OVERRIDE_ALLOW:
+      _mail_redirect_allow($mailkey, $to);
+      break;
+
+    case MAIL_REDIRECT_OVERRIDE_BLOCK:
+      _mail_redirect_block($mailkey, $to);
+      break;
+
+    case MAIL_REDIRECT_OVERRIDE_REDIRECT:
+      _mail_redirect_redirect($message, _mail_redirect_get_redirect_email());
+      break;
   }
 }
