@@ -556,6 +556,9 @@ function cat_profile_mail_redirect_settings_form() {
 
     //get the environment
     $environment = $debconf->get('environment');
+    if($environment == 'production'){
+      drupal_set_message('Mail Redirect is disabled in a production environment', 'warning');
+    }
   }
 
   module_load_include('inc','cat_profile','mail_redirect');
