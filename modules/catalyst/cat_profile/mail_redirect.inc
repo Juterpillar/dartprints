@@ -36,11 +36,11 @@ function _mail_redirect_block(&$message) {
 }
 
 function _mail_redirect_get_redirect_email(&$message) {
-  if (empty($message['id']))
+  if (empty($message))
     return variable_get('mail_redirect_default_email', variable_get('site_mail', null));
 
   $mailkey_emails = unserialize(variable_get('mail_redirect_emails', ''));
-  return (empty($mailkey_emails) ? null : $mailkey_emails[$message['id']]);
+  return (empty($mailkey_emails) ? null : $mailkey_emails[$message]);
 }
 
 function _mail_redirect_redirect(&$message, $redirect_email) {
