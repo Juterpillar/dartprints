@@ -547,7 +547,6 @@ function cat_profile_var_dump_form(&$form_state) {
 function cat_profile_mail_redirect_settings_form() {
   //get the package name
   $dpkg = _cat_profile_mail_redirect_shell_exec('dpkg -S ' . $_SERVER["DOCUMENT_ROOT"] . '/index.php');
-  var_dump($dpkg);die;
   $exp = explode(':', $dpkg);
   if($exp[0] != 'dpkg'){
     $package = $exp[0];
