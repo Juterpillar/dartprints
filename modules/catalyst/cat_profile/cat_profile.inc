@@ -545,6 +545,20 @@ function cat_profile_var_dump_form(&$form_state) {
 }
 
 function cat_profile_mail_redirect_settings_form() {
+  //get the package name
+  $dpkg = _cat_profile_mail_redirect_shell_exec('dpkg -S ' . $_SERVER["DOCUMENT_ROOT"] . '/index.php');
+  var_dump($dpkg);die;
+  $exp = explode(':', $dpkg);
+  if($exp[0] != 'dpkg'){
+    $package = $exp[0];
+    //load the library to talk to debconf
+    include libraries_get_path('libdebconf') . '/libdebconf.php';
+    $debconf = new DrupalDebConf($package);
+
+    //get the environment
+    $environment = $debconf->get('environment');
+  }
+
   module_load_include('inc','cat_profile','mail_redirect');
   $path = drupal_get_path('inc', 'mail_redirect');
   drupal_add_js($path . '/mail_redirect.js');
@@ -599,6 +613,23 @@ function cat_profile_mail_redirect_settings_form() {
   );
   $form['mailkey_rules']['mailkey_rule_table'] = expand_mailkey_table($form['mailkey_rules']['mailkey_rule_table']);
   return $form;
+}
+
+/**
+  * Executes a shell command.
+  */
+function _cat_profile_mail_redirect_shell_exec($cmd){
+  $args = func_get_args();
+
+  //do not change the command itself, just the parameters.
+  for ($x = 1; $x < sizeof($args); $x++) {
+    $args[$x] = escapeshellarg($args[$x]);
+  }
+  $command = call_user_func_array('sprintf', $args);
+
+  exec($command . ' 2>&1', $output, $result);
+
+  return $output[0];
 }
 
 function _cat_profile_mail_redirect_get_mailkey_options() {
