@@ -192,32 +192,8 @@ function cat_profile_mail_alter(&$message) {
   $mailkey = $message['id'];
   $to = $message['to'];
 
-  $mailkey_rules = unserialize(variable_get('mail_redirect_rules', ''));
-
-  if (!isset($mailkey_rules[$mailkey])) { // IF mailkey does not exist, add it to rule list
-    $mailkey_rules[$mailkey] = variable_get('mail_redirect_default_rule', MAIL_REDIRECT_DEFAULT_RULE);
-    variable_set('mail_redirect_rules', serialize($mailkey_rules));
-  }
-
   switch (variable_get('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_DISABLED)) {
     case MAIL_REDIRECT_OVERRIDE_DISABLED:
-      switch ($mailkey_rules[$mailkey]) {
-        case MAIL_REDIRECT_ALLOW:
-           _mail_redirect_allow($message);
-          break;
-
-        case MAIL_REDIRECT_BLOCK:
-           _mail_redirect_block($mailkey, $to);
-          break;
-
-        case MAIL_REDIRECT_REDIRECT:
-          _mail_redirect_redirect($message, _mail_redirect_get_redirect_email());
-          break;
-
-        case MAIL_REDIRECT_CUSTOM_REDIRECT:
-          _mail_redirect_redirect($message, _mail_redirect_get_redirect_email($mailkey));
-          break;
-      }
       break;
 
     case MAIL_REDIRECT_OVERRIDE_ALLOW:

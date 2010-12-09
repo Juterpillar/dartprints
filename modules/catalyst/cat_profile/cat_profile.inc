@@ -1,5 +1,9 @@
 <?php
 
+define(MAIL_REDIRECT_OVERRIDE_DISABLED, 0);
+define(MAIL_REDIRECT_OVERRIDE_ALLOW, 1);
+define(MAIL_REDIRECT_OVERRIDE_BLOCK, 2);
+define(MAIL_REDIRECT_OVERRIDE_REDIRECT, 3);
 
 /**
  * Install one or more modules (ignoring dependencies!)
@@ -544,9 +548,16 @@ function cat_profile_var_dump_form(&$form_state) {
   return $form;
 }
 
-function cat_profile_mail_redirect_settings_form() {
+/**
+  * Get the current environment
+  *
+  * @author Adam Bramley
+  * @return the environment (Production, Staging, Development, or UAT)
+  */
+function _cat_profile_mail_redirect_get_environment() {
   //get the package name
-  $dpkg = _cat_profile_mail_redirect_shell_exec('dpkg -S ' . $_SERVER["DOCUMENT_ROOT"] . '/index.php');
+  $drupal_root = substr(dirname(__FILE__), 0, strpos(dirname(__FILE__), drupal_get_path('module', 'cat_profile')));
+  $dpkg = _cat_profile_mail_redirect_shell_exec('dpkg -S ' . $drupal_root . '/index.php');
   $exp = explode(':', $dpkg);
   if($exp[0] != 'dpkg'){
     $package = $exp[0];
@@ -556,71 +567,69 @@ function cat_profile_mail_redirect_settings_form() {
 
     //get the environment
     $environment = $debconf->get('environment');
-    if($environment == 'production'){
-      drupal_set_message('Mail Redirect is disabled in a production environment', 'warning');
-    }
+  } 
+  else{
+    //if there is no package, must be a dev environment
+    $environment = 'Development';
+  }
+  return $environment;
+}
+
+/**
+  * Implementation of hook_form
+  */
+function cat_profile_mail_redirect_settings_form(&$node, $form_state) {
+  $environment = _cat_profile_mail_redirect_get_environment();
+  $disabled = ($environment == 'Production');
+
+  if ($disabled){
+    drupal_set_message('Mail Redirect is disabled for production environments', 'warning');
   }
 
   module_load_include('inc','cat_profile','mail_redirect');
-  $path = drupal_get_path('inc', 'mail_redirect');
-  drupal_add_js($path . '/mail_redirect.js');
-  drupal_add_js($path . '/jquery.highlightFade.js');
-
-  $mailkey_options_for_default = _cat_profile_mail_redirect_get_mailkey_options();
-  unset($mailkey_options_for_default[3]); // Remove the 4th element because it is unlikely that people will want "Redirect to:" as the default
-
-  $mailkey_rules = unserialize(variable_get('mail_redirect_rules', ''));
 
   $form['#tree'] = TRUE;
-  $form['main_settings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Mail settings'),
-    '#collapsible' => TRUE,
-  );
-  $form['main_settings']['override'] = array(
+  $form['override'] = array(
     '#type' => 'select',
-    '#title' => t('Mailkey rule override'),
+    '#title' => t('Redirect Options:'),
     '#options' => array(t('- Disabled -'), t('Allow all emails through'), t('Block all emails from going through'), t('Redirect all emails to default E-mail address')),
     '#default_value' => variable_get('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_DISABLED),
-    '#description' => t('This will override any settings in the Mailkey rules table!'),
+    '#description' => t('This will apply the chosen setting to all outgoing mail.'),
+    '#disabled' => $disabled,
   );
-  $form['main_settings']['default_rule'] = array(
-    '#type' => 'select',
-    '#title' => t('Default rule for new mailkeys'),
-    '#options' =>  $mailkey_options_for_default,
-    '#default_value' => variable_get('mail_redirect_default_rule', MAIL_REDIRECT_DEFAULT_RULE),
-  );
-  $form['main_settings']['default_email'] = array(
+  $form['default_email'] = array(
     '#type' => 'textfield',
-    '#title' => t('By deafult redirect emails to'),
+    '#title' => t('Redirect emails to'),
     '#default_value' => variable_get('mail_redirect_default_email', variable_get('site_mail', '')),
-    '#description' => t('All emails with mailkey rule set to "Redirect" will be sent to this email'),
-  );
-  $form['mailkey_rules'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Mailkey rules'),
-    '#collapsible' => TRUE,
-    '#description' => t('This table is automatically updated as new mailkeys are discovered.'),
-  );
-  $form['mailkey_rules']['mailkey_rule_table'] = array(
-    '#type' => 'mailkey_table',
-  );
-  $form['mailkey_rules']['add_mailkey'] = array(
-    '#type' => 'markup',
-    '#value' => '<div class="mail-redirect-add-mailkey" />',
+    '#description' => t('If redirect is chosen, emails will be sent to this address.'),
+    '#disabled' => $disabled,
   );
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
+    '#disabled' => $disabled,
   );
-  $form['mailkey_rules']['mailkey_rule_table'] = expand_mailkey_table($form['mailkey_rules']['mailkey_rule_table']);
   return $form;
+}
+
+/**
+  * Implementation of hook_validate()
+  *
+  * @author Adam Bramley
+  */
+function cat_profile_mail_redirect_settings_form_validate($form, $form_state) {
+  $values = $form_state['values'];
+  if($values['override'] == '3')  {
+    if(!eregi("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$", $values['default_email'])) { 
+      form_set_error('default_email', 'Please enter a valid email address.');
+    }
+  }
 }
 
 /**
   * Executes a shell command.
   */
-function _cat_profile_mail_redirect_shell_exec($cmd){
+function _cat_profile_mail_redirect_shell_exec($cmd)  {
   $args = func_get_args();
 
   //do not change the command itself, just the parameters.
@@ -634,122 +643,17 @@ function _cat_profile_mail_redirect_shell_exec($cmd){
   return $output[0];
 }
 
-function _cat_profile_mail_redirect_get_mailkey_options() {
-    return array('Allow', 'Block', 'Redirect', 'Redirect to:');
-}
-
-function _cat_profile_mail_redirect_store_mailkeys($input_array, &$mailkey_rules, &$mailkey_emails) {
-  if (!is_array($input_array)) {
-    return;
-  }
-
-  foreach ($input_array as $rule_id => $rule) {
-    if ($rule['remove'] == 0 && !empty($rule['title']) && $rule['title'] != '<enter new mailkey>') {
-      $mailkey_rules[$rule['title']] = $rule['rule'];
-      if ($rule['rule'] == MAIL_REDIRECT_CUSTOM_REDIRECT) {
-        if (empty($rule['email'])) {
-          $mailkey_emails[$rule['title']] = variable_get('mail_redirect_default_email', variable_get('site_mail', ''));
-        }
-        else {
-          $mailkey_emails[$rule['title']] = $rule['email'];
-        }
-      }
-    }
-  }
-}
-
 /**
  * Submit handler for for cat_profile_mail_redirect_settings_form
  */
 function cat_profile_mail_redirect_settings_form_submit(&$form, &$form_state) {
   module_load_include('inc','cat_profile','mail_redirect');
-  $mailkey_rules = array();
-  $mailkey_emails = array();
 
   $values = (object) $form_state['values'];
-  _cat_profile_mail_redirect_store_mailkeys($values->mailkey_rules['mailkey_rule_table']['mailkeys'], $mailkey_rules, $mailkey_emails);
 
-  _cat_profile_mail_redirect_store_mailkeys($values->mailkey_rules['add_mailkey']['mailkey_rule_table'], $mailkey_rules, $mailkey_emails);
-
-  variable_set('mail_redirect_rules', serialize($mailkey_rules));
-  variable_set('mail_redirect_emails', serialize($mailkey_emails));
-
-  variable_set('mail_redirect_override', $values->main_settings['override']);
-  variable_set('mail_redirect_default_rule', $values->main_settings['default_rule']);
-  variable_set('mail_redirect_default_email', $values->main_settings['default_email']);
-  variable_set('mail_redirect_log_enabled', $values->logging['enable_logging']);
-
-  if ($values->logging['clear_log'])
-    variable_set('mail_redirect_log', '');
+  variable_set('mail_redirect_override', $values->override);
+  variable_set('mail_redirect_default_email', $values->default_email);
 }
-/**
- * Helper function for mail redirect form element mailkey_table (defined in hook_elements)
- */
-function expand_mailkey_table($element) {
-  $element['#tree'] = TRUE;
-  $element['mailkeys'] = array();
-  //create default template for Mailkey entries.
-  $template['title'] = array(
-    '#type' => 'textfield',
-    '#size' => 20,
-    '#attributes' => array('class' => 'mail-redirect-title'),
-  );
-  $template['rule'] = array(
-    '#type' => 'select',
-    '#options' => _cat_profile_mail_redirect_get_mailkey_options(),
-    '#default_value' => 0,
-    '#attributes' => array('class' => 'mail-redirect-rule'),
-  );
-  $template['email'] = array(
-    '#type' => 'textfield',
-    '#size' => 20,
-    '#attributes' => array('class' => 'mail-redirect-email'),
-  );
-  $template['remove'] = array(
-    '#type' => 'checkbox',
-    '#default_value' => 0,
-    '#prefix' => '<div align="right">',
-    '#suffix' => '</div>',
-    '#attributes' => array('class' => 'mail-redirect-remove'),
-  );
-
-  //Get the Mailkey rules we already have
-  $mailkey_rules = unserialize(variable_get('mail_redirect_rules', ''));
-  if (empty($mailkey_rules)) {
-    $mailkey_rules = array();
-  }
-
-  //for each of them fill in the relevant details.
-  foreach ($mailkey_rules as $mailkey => $rule_value) {
-    $template['title']['#default_value'] = $mailkey;
-    $template['rule']['#default_value'] = $rule_value;
-    if ($rule_value == MAIL_REDIRECT_CUSTOM_REDIRECT) {
-      $template['email']['#default_value'] = _mail_redirect_get_redirect_email($mailkey);
-    }
-    else {
-      $template['email']['#default_value'] = '';
-    }
-
-    $element['mailkeys'][] = $template;
-  }
-  $template['title']['#default_value'] = '';
-  $template['rule']['#default_value'] = variable_get('mail_redirect_default_rule', MAIL_REDIRECT_DEFAULT_RULE);
-  $template['email']['#default_value'] = '';
-
-  $element['add_mailkey'] = $template;
-
-  //add a blank mailkey entry for new rules.
-  $template['title']['#default_value'] = '<enter new mailkey>';
-  $template['title']['#attributes'] = array('class' => 'mail-redirect-no-js-new-mailkey');
-  $element['mailkeys'][] = $template;
-  return $element;
-}
-
-/*
-function cat_profile_var_dump_form_submit(&$form, &$form_state) {
-  $form['#rebuild'] = true;
-  $form_state['storage']['variable'] = $form_state['values']['variable'];
-}*/
 
 /**
  * Set a new string override for t()
