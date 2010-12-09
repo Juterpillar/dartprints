@@ -35,14 +35,8 @@ function _mail_redirect_block(&$message) {
   $message['to'] = null;
 }
 
-function _mail_redirect_get_redirect_email(&$message) {
-  //if the message is empty use default email
-  if (empty($message))
-    return variable_get('mail_redirect_default_email', variable_get('site_mail', null));
-
-  //otherwise get the email for the corresponding key
-  $mailkey_emails = unserialize(variable_get('mail_redirect_emails', ''));
-  return (empty($mailkey_emails) ? null : $mailkey_emails[$message]);
+function _mail_redirect_get_redirect_email() {
+  return variable_get('mail_redirect_default_email', variable_get('site_mail', null));
 }
 
 function _mail_redirect_redirect(&$message, $redirect_email) {

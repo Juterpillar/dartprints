@@ -604,6 +604,13 @@ function cat_profile_mail_redirect_settings_form(&$node, $form_state) {
     '#description' => t('If redirect is chosen, emails will be sent to this address.'),
     '#disabled' => $disabled,
   );
+  $form['logging'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable Logging'),
+    '#default_value' => variable_get('mail_redirect_log_enabled', TRUE),
+    '#description' => t('Enable logging of mail redirect activity.'),
+    '#disabled' => $disabled,
+  );
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
@@ -653,6 +660,7 @@ function cat_profile_mail_redirect_settings_form_submit(&$form, &$form_state) {
 
   variable_set('mail_redirect_override', $values->override);
   variable_set('mail_redirect_default_email', $values->default_email);
+  variable_set('mail_redirect_log_enabled', $values->logging);
 }
 
 /**
