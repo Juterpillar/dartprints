@@ -549,34 +549,7 @@ function cat_profile_var_dump_form(&$form_state) {
 }
 
 /**
-  * Get the current environment
-  *
-  * @author Adam Bramley
-  * @return the environment (Production, Staging, Development, or UAT)
-  */
-function _cat_profile_mail_redirect_get_environment() {
-  //get the package name
-  $drupal_root = substr(dirname(__FILE__), 0, strpos(dirname(__FILE__), drupal_get_path('module', 'cat_profile')));
-  $dpkg = _cat_profile_mail_redirect_shell_exec('dpkg -S ' . $drupal_root . '/index.php');
-  $exp = explode(':', $dpkg);
-  if($exp[0] != 'dpkg'){
-    $package = $exp[0];
-    //load the library to talk to debconf
-    include libraries_get_path('libdebconf') . '/libdebconf.php';
-    $debconf = new DrupalDebConf($package);
-
-    //get the environment
-    $environment = $debconf->get('environment');
-  } 
-  else{
-    //if there is no package, must be a dev environment
-    $environment = 'Development';
-  }
-  return $environment;
-}
-
-/**
-  * Implementation of hook_form
+  * Implementation of hook_form()
   */
 function cat_profile_mail_redirect_settings_form(&$node, $form_state) {
   $environment = _cat_profile_mail_redirect_get_environment();
@@ -585,8 +558,6 @@ function cat_profile_mail_redirect_settings_form(&$node, $form_state) {
   if ($disabled){
     drupal_set_message('Mail Redirect is disabled for production environments', 'warning');
   }
-
-  module_load_include('inc','cat_profile','mail_redirect');
 
   $form['#tree'] = TRUE;
   $form['override'] = array(
@@ -627,10 +598,21 @@ function cat_profile_mail_redirect_settings_form(&$node, $form_state) {
 function cat_profile_mail_redirect_settings_form_validate($form, $form_state) {
   $values = $form_state['values'];
   if($values['override'] == '3')  {
-    if(!eregi("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$", $values['default_email'])) { 
-      form_set_error('default_email', 'Please enter a valid email address.');
+    if(!eregi("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$", $values['default_email'])) {
+      form_set_error('default_email', 'A valid email address must be entered when using redirection.');
     }
   }
+}
+
+/**
+  * Submit handler for cat_profile_mail_redirect_settings_form
+  */
+function cat_profile_mail_redirect_settings_form_submit(&$form, &$form_state) {
+  $values = (object) $form_state['values'];
+
+  variable_set('mail_redirect_override', $values->override);
+  variable_set('mail_redirect_default_email', $values->default_email);
+  variable_set('mail_redirect_log_enabled', $values->logging);
 }
 
 /**
@@ -651,16 +633,31 @@ function _cat_profile_mail_redirect_shell_exec($cmd)  {
 }
 
 /**
- * Submit handler for for cat_profile_mail_redirect_settings_form
- */
-function cat_profile_mail_redirect_settings_form_submit(&$form, &$form_state) {
-  module_load_include('inc','cat_profile','mail_redirect');
+  * Get the current environment from debconf
+  *
+  * @return the environment (Production, Staging, Development, or UAT)
+  * @author Adam Bramley
+  */
+function _cat_profile_mail_redirect_get_environment() {
+  //get the package name, drupal root found through striping last dirs off module location
+  $drupal_root = substr(dirname(__FILE__), 0, strpos(dirname(__FILE__), drupal_get_path('module', 'cat_profile')));
+  $dpkg = _cat_profile_mail_redirect_shell_exec('dpkg -S ' . $drupal_root . '/index.php');
+  $exp = explode(':', $dpkg);
+  if($exp[0] != 'dpkg'){
+    $package = $exp[0];
 
-  $values = (object) $form_state['values'];
+    //load the library to talk to debconf
+    include libraries_get_path('libdebconf') . '/libdebconf.php';
+    $debconf = new DrupalDebConf($package);
 
-  variable_set('mail_redirect_override', $values->override);
-  variable_set('mail_redirect_default_email', $values->default_email);
-  variable_set('mail_redirect_log_enabled', $values->logging);
+    //get the environment
+    $environment = $debconf->get('environment');
+  }
+  else{
+    //if there is no package assume a dev environment
+    $environment = 'Development';
+  }
+  return $environment;
 }
 
 /**
