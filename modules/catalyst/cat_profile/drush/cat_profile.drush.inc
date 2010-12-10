@@ -68,15 +68,61 @@ function cat_profile_dh_make_prebuild($dir) {
         if (!preg_match_all('/remote "([^"]*)"/', $section, $matches)) {
           continue;
         }
-        drush_print_r($matches);return;
+        $ini['git']['remote "' . $matches[1][0] . '"'] = $config['url'];
       }
     }
   }
   if (drush_get_option('wrms', FALSE)) {
     $ini['wrms']['wr'] = drush_get_option('wrms', array());
   }
-  write_ini_file($ini, $ini_file, TRUE);
+  cat_profile_write_ini_file($ini, $ini_file, TRUE);
   return array($ini_file => 'info.ini');
+}
+
+/**
+ * Implementation of hook_debian_create().
+ */
+function nagios_nrpe_debian_create() {
+  // Nagios Support.
+  // Generate a Nagios nrpe.cfg format PHP template.
+  $checks = (array) module_invoke_all('nagios_nrpe_checks');
+  $project = drush_get_option('dh-project');
+  foreach ((array) module_invoke_all('nagios_nrpe_checks') as $check => $desc) {
+    $commands[$project . '_' . $check] = '/usr/bin/drush -r /var/www/__PACKAGE__ nrpe ' . $check;
+  }
+  $file = '';
+  foreach ($commands as $name => $cmd) {
+    $file .= "command[$name]=$cmd\n";
+  }
+  $filename = '/tmp/' . drush_get_option('dh-package') . '.nrpe.cfg';
+  file_put_contents($filename, $file);
+  return array($filename => 'nrpe.cfg');
+}
+
+/**
+ * Implementation of hook_debian_postinst().
+ */
+function nagios_nrpe_debian_postinst() {
+  // Cannot use debian conventions like the dirs file to do this as we're not
+  // sure if the Nagios NRPE server is enabled or not.
+  $code  = '    // If this server uses Nagios NRPE then add the NRPE checks.' . PHP_EOL;
+  $code .= '    if (deb_shell_exec("dpkg -l | grep \'ii  nagios-nrpe-server\'")) {' . PHP_EOL;
+  $code .= '      $nagios_cfg = "/etc/nagios/nrpe.d/" . PACKAGE_NAME;' . PHP_EOL;
+  $code .= '      if ((is_dir("/etc/nagios/nrpe.d") || mkdir("/etc/nagios/nrpe.d")) && (!is_link($nagios_cfg) && !is_file($nagios_cfg))) {' . PHP_EOL;
+  $code .= '        symlink("/etc/" . PACKAGE_NAME . "/nrpe.cfg", $nagios_cfg);' . PHP_EOL;
+  $code .= '      }' . PHP_EOL;
+  $code .= '    }' . PHP_EOL;
+
+  return $code;
+}
+
+/**
+ * Implementation of hook_debian_install().
+ */
+function nagios_nrpe_debian_install() {
+  return array(
+    array('debian/nrpe.cfg', 'etc/' . drush_get_option('dh-package')),
+  );
 }
 
 /**
@@ -88,48 +134,41 @@ function cat_profile_debian_install() {
   );
 }
 
-if (!function_exists('write_ini_file')) {
-    function write_ini_file($assoc_arr, $path, $has_sections=FALSE) {
-        $content = "";
+function cat_profile_write_ini_file($assoc_arr, $path, $has_sections=FALSE) {
+    $content = "";
 
-        if ($has_sections) {
-            foreach ($assoc_arr as $key=>$elem) {
-                $content .= "[".$key."]\n";
-                foreach ($elem as $key2=>$elem2)
-                {
-                    if(is_array($elem2))
-                    {
-                        for($i=0;$i<count($elem2);$i++)
-                        {
-                            $content .= $key2."[] = \"".$elem2[$i]."\"\n";
-                        }
-                    }
-                    else if($elem2=="") $content .= $key2." = \n";
-                    else $content .= $key2." = \"".$elem2."\"\n";
-                }
+    if ($has_sections) {
+      foreach ($assoc_arr as $key => $elem) {
+        $content .= "[".$key."]\n";
+        foreach ($elem as $key2 => $elem2) {
+            if(is_array($elem2)) {
+              for($i=0;$i<count($elem2);$i++) {
+                $content .= $key2."[] = \"".$elem2[$i]."\"\n";
+              }
             }
+            else if($elem2=="") $content .= $key2." = \n";
+            else $content .= $key2." = \"".$elem2."\"\n";
         }
-        else {
-            foreach ($assoc_arr as $key=>$elem) {
-                if(is_array($elem))
-                {
-                    for($i=0;$i<count($elem);$i++)
-                    {
-                        $content .= $key2."[] = \"".$elem[$i]."\"\n";
-                    }
-                }
-                else if($elem=="") $content .= $key2." = \n";
-                else $content .= $key2." = \"".$elem."\"\n";
-            }
-        }
-
-        if (!$handle = fopen($path, 'w')) {
-            return false;
-        }
-        if (!fwrite($handle, $content)) {
-            return false;
-        }
-        fclose($handle);
-        return true;
+      }
     }
+    else {
+      foreach ($assoc_arr as $key=>$elem) {
+        if(is_array($elem)) {
+          for($i=0;$i<count($elem);$i++) {
+            $content .= $key2."[] = \"".$elem[$i]."\"\n";
+          }
+        }
+        else if($elem=="") $content .= $key2." = \n";
+        else $content .= $key2." = \"".$elem."\"\n";
+      }
+    }
+
+    if (!$handle = fopen($path, 'w')) {
+        return false;
+    }
+    if (!fwrite($handle, $content)) {
+        return false;
+    }
+    fclose($handle);
+    return true;
 }

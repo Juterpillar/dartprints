@@ -1,6 +1,15 @@
 <?php
 
 /**
+ * Implementation of hook_init().
+ */
+function cat_profile_init() {
+  global $conf;
+  // Turn off nagios checks through the web interface.
+  $conf['nagios_enable_nagios'] = 0;
+}
+
+/**
  * Implementation of hook_perm()
  *
  */
