@@ -13,6 +13,7 @@ function cat_profile_requirements($phase) {
 
   $default_email = variable_get('mail_redirect_default_email','');
   $override = variable_get('mail_redirect_override','');
+  //if, somehow, the override is set to redirect but the email is empty, an error should be shown
   if(empty($default_email) && $override == '3'){
     $requirements['Mail Redirect'] = array(
       'title' => $t('Mail Redirect'),
@@ -24,6 +25,7 @@ function cat_profile_requirements($phase) {
   if($phase == 'install'){
     module_load_include('inc', 'cat_profile', 'cat_profile');
     $environment = _cat_profile_mail_redirect_get_environment();
+
     if($environment == 'Development') {
       $git = _cat_profile_mail_redirect_shell_exec('git rev-parse --git-dir');
       if($git == '.git')  {
@@ -43,7 +45,7 @@ function cat_profile_requirements($phase) {
         );
       }
     }
-    else if($environment == 'Production' || $environment == 'UAT'){
+    else if($environment == 'Production' || $environment == 'UAT')  {
       //Don't want any redirection going on in production.
       variable_set('mail_redirect_default_email', '');
       variable_set('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_DISABLED);
