@@ -1,0 +1,30 @@
+drupal-site-mins (20101209-1) unstable; urgency=low
+
+  * Work on mail_redirect
+
+ -- Adam Bramley <adam@catalyst.net.nz>  Thu, 9 Dec 2010 11:32:59 +1300
+
+drupal-site-mins (20101029-3) unstable; urgency=low
+
+  * Acquia upgrade (security patches)
+  *  contib module updates
+  *  and changed to drush dh-make
+
+ -- Brenda Wallace <shiny@cpan.org>  Fri, 29 Oct 2010 13:30:14 +1300
+
+drupal-site-mins (20101029-2) unstable; urgency=low
+
+  * Acquia upgrade (security patches)
+  *  contib module updates
+  *  and changed to drush dh-make
+
+ -- Brenda Wallace <shiny@cpan.org>  Fri, 29 Oct 2010 13:12:17 +1300
+
+drupal-site-mins (20101029-1) unstable; urgency=low
+
+  * Acquia upgrade (security patches)
+  *  contib module updates
+  *  and changed to drush dh-make
+
+ -- Brenda Wallace <shiny@cpan.org>  Fri, 29 Oct 2010 13:06:38 +1300
+
