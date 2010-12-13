@@ -1,5 +1,10 @@
 <?php
 
+define(MAIL_REDIRECT_OVERRIDE_DISABLED, 0);
+define(MAIL_REDIRECT_OVERRIDE_ALLOW, 1);
+define(MAIL_REDIRECT_OVERRIDE_BLOCK, 2);
+define(MAIL_REDIRECT_OVERRIDE_REDIRECT, 3);
+
 /**
  * Install one or more modules (ignoring dependencies!)
  *
@@ -18,6 +23,27 @@ function cat_profile_install_modules($modules, &$res) {
       'success' => db_result(db_query("SELECT status FROM {system} WHERE type='module' AND name='%s'", $module))
     );
     module_enable(array($module));
+  }
+  return $res;
+}
+
+/**
+ * Install one or more themes (ignoring dependencies!)
+ *
+ * @param mixed $themes either a single string theme name, or an array of theme names
+ * @param array $res your res array, by reference. We'll write in an update_sql()-esqe entry for each module
+ * @return array the last array added to your &$res
+ * @author Neil Bertram <neil@catalyst.net.nz>
+ */
+function cat_profile_install_themes($themes, &$res) {
+  system_theme_data(); // search for any new modules
+  $themes = (array)$themes;
+  foreach ($themes as $theme) {
+    db_query("UPDATE {system} SET status = 1 WHERE type = 'theme' AND name = '%s'", $theme);
+    $res[] = array(
+      'query' => 'Installing '.$theme.' theme',
+      'success' => db_result(db_query("SELECT status FROM {system} WHERE type='theme' AND name='%s'", $theme))
+    );
   }
   return $res;
 }
@@ -521,11 +547,118 @@ function cat_profile_var_dump_form(&$form_state) {
 
   return $form;
 }
-/*
-function cat_profile_var_dump_form_submit(&$form, &$form_state) {
-  $form['#rebuild'] = true;
-  $form_state['storage']['variable'] = $form_state['values']['variable'];
-}*/
+
+/**
+  * Implementation of hook_form()
+  */
+function cat_profile_mail_redirect_settings_form(&$node, $form_state) {
+  $environment = _cat_profile_mail_redirect_get_environment();
+  $disabled = ($environment == 'Production');
+
+  if ($disabled){
+    drupal_set_message('Mail Redirect is disabled for production environments', 'warning');
+  }
+
+  $form['#tree'] = TRUE;
+  $form['override'] = array(
+    '#type' => 'select',
+    '#title' => t('Redirect Options:'),
+    '#options' => array(t('- Disabled -'), t('Allow all emails through'), t('Block all emails from going through'), t('Redirect all emails to default E-mail address')),
+    '#default_value' => variable_get('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_DISABLED),
+    '#description' => t('This will apply the chosen setting to all outgoing mail.'),
+    '#disabled' => $disabled,
+  );
+  $form['default_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Redirect emails to'),
+    '#default_value' => variable_get('mail_redirect_default_email', variable_get('site_mail', '')),
+    '#description' => t('If redirect is chosen, emails will be sent to this address.'),
+    '#disabled' => $disabled,
+  );
+  $form['logging'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable Logging'),
+    '#default_value' => variable_get('mail_redirect_log_enabled', TRUE),
+    '#description' => t('Enable logging of mail redirect activity.'),
+    '#disabled' => $disabled,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+    '#disabled' => $disabled,
+  );
+  return $form;
+}
+
+/**
+  * Implementation of hook_validate()
+  *
+  * @author Adam Bramley
+  */
+function cat_profile_mail_redirect_settings_form_validate($form, $form_state) {
+  $values = $form_state['values'];
+  if($values['override'] == '3')  {
+    if(!eregi("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$", $values['default_email'])) {
+      form_set_error('default_email', 'A valid email address must be entered when using redirection.');
+    }
+  }
+}
+
+/**
+  * Submit handler for cat_profile_mail_redirect_settings_form
+  */
+function cat_profile_mail_redirect_settings_form_submit(&$form, &$form_state) {
+  $values = (object) $form_state['values'];
+
+  variable_set('mail_redirect_override', $values->override);
+  variable_set('mail_redirect_default_email', $values->default_email);
+  variable_set('mail_redirect_log_enabled', $values->logging);
+}
+
+/**
+  * Executes a shell command.
+  */
+function _cat_profile_mail_redirect_shell_exec($cmd)  {
+  $args = func_get_args();
+
+  //do not change the command itself, just the parameters.
+  for ($x = 1; $x < sizeof($args); $x++) {
+    $args[$x] = escapeshellarg($args[$x]);
+  }
+  $command = call_user_func_array('sprintf', $args);
+
+  exec($command . ' 2>&1', $output, $result);
+
+  return $output[0];
+}
+
+/**
+  * Get the current environment from debconf
+  *
+  * @return the environment (Production, Staging, Development, or UAT)
+  * @author Adam Bramley
+  */
+function _cat_profile_mail_redirect_get_environment() {
+  //get the package name, drupal root found through striping last dirs off module location
+  $drupal_root = substr(dirname(__FILE__), 0, strpos(dirname(__FILE__), drupal_get_path('module', 'cat_profile')));
+  $dpkg = _cat_profile_mail_redirect_shell_exec('dpkg -S ' . $drupal_root . '/index.php');
+  $exp = explode(':', $dpkg);
+  if($exp[0] != 'dpkg'){
+    $package = $exp[0];
+
+    //load the library to talk to debconf
+    include libraries_get_path('libdebconf') . '/libdebconf.php';
+    $debconf = new DrupalDebConf($package);
+
+    //get the environment
+    $environment = $debconf->get('environment');
+  }
+  else{
+    //if there is no package assume a dev environment
+    $environment = 'Development';
+  }
+  return $environment;
+}
 
 /**
  * Set a new string override for t()
@@ -651,7 +784,7 @@ function cat_profile_data_revert($static_data, $table, $conditions) {
     // Firstly, restore (UPDATE) or create (INSERT) any missing
     // or out dated rows.
     foreach ($rows as $row) {
-      cat_profile_restore_row($table_name, $row);
+      cat_profile_restore_row($table_name, $row, array_keys($conditions));
     }
     // In PostgreSQL, we could potentially upset table
     // sequences so we should set them to there current
