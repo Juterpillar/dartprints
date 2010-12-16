@@ -562,7 +562,7 @@ function cat_profile_mail_redirect_settings_form(&$node, $form_state) {
   $form['#tree'] = TRUE;
   $form['override'] = array(
     '#type' => 'select',
-    '#title' => t('Redirect Options:'),
+    '#title' => t('Redirect Options'),
     '#options' => array(t('- Disabled -'), t('Allow all emails through'), t('Block all emails from going through'), t('Redirect all emails to default E-mail address')),
     '#default_value' => variable_get('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_DISABLED),
     '#description' => t('This will apply the chosen setting to all outgoing mail.'),
