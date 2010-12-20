@@ -68,7 +68,7 @@ function cat_profile_dh_make_prebuild($dir) {
         if (!preg_match_all('/remote "([^"]*)"/', $section, $matches)) {
           continue;
         }
-        $ini['git']['remote "' . $matches[1][0] . '"'] = $config['url'];
+        $ini['git']['remote_' . $matches[1][0]] = $config['url'];
       }
     }
   }
