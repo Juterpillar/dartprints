@@ -65,10 +65,10 @@ function cat_profile_dh_make_prebuild($dir) {
       $ini['git']['commit'] = $vc_engine->hash();
       $gitconfig = parse_ini_file(DRUPAL_ROOT . '/.git/config', TRUE);
       foreach ($gitconfig as $section => $config) {
-        if (!preg_match_all('/remote "([^"]*)"/', $section, $matches)) {
+        if (!preg_match_all('/remote_(*)/', $section, $matches)) {
           continue;
         }
-        $ini['git']['remote "' . $matches[1][0] . '"'] = $config['url'];
+        $ini['git']['remote_' . $matches[1][0]] = $config['url'];
       }
     }
   }
