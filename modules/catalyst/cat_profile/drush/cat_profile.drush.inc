@@ -57,7 +57,7 @@ function cat_profile_dh_make_prebuild($dir) {
   if (is_file($ini_file)) {
     $ini = parse_ini_file($ini_file, TRUE);
   }
-  else {
+  else { 
     $ini = array();
   }
   if ($vc_engine = drush_pm_include_version_control(DRUPAL_ROOT)) {
@@ -71,7 +71,7 @@ function cat_profile_dh_make_prebuild($dir) {
         $ini['git']['remote_' . $matches[1][0]] = $config['url'];
       }
     }
-  }
+  }   
   if (drush_get_option('wrms', FALSE)) {
     $ini['wrms']['wr'] = drush_get_option('wrms', array());
   }
