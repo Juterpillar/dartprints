@@ -20,7 +20,7 @@ function catalyst_ui_profile_modules() {
       // CCK
       'content', 'text', 'filefield', 'imagefield',
       // Catalyst tracking
-      'admin', 'drupal_status', 'catalyst_status', 'nagios', 'nagios_nrpe',
+      'archimedes', 'cat_profile', 'nagios', 'nagios_nrpe',
   );
 
   return $modules;

@@ -14,7 +14,7 @@ function catalyst_profile_modules() {
     // Contributed modules
     'admin', 'vertical tabs',
     // Catalyst tracking
-    'drupal_status', 'catalyst_status', 'cat_profile', 'nagios', 'nagios_nrpe',
+    'archimedes', 'cat_profile', 'nagios', 'nagios_nrpe',
   );
 
   return $modules;
