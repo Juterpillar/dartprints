@@ -48,9 +48,9 @@ function cat_profile_debian_postinst() {
   }
 
   $output .= <<<CODE
-         \$settings .= "\$conf['archimedes_server_email'] = 'archimedes@catalyst.net.nz';" . PHP_EOL;
-         //\$settings .= "\$conf['archimedes_server_location'] = 'archimedes.catalyst.net.nz';" . PHP_EOL;
-         \$settings .= "\$conf['archimedes_server_key'] = '-----BEGIN PUBLIC KEY-----
+         \$settings .= "\\\$conf['archimedes_server_email'] = 'archimedes@catalyst.net.nz';" . PHP_EOL;
+         //\$settings .= "\\\$conf['archimedes_server_location'] = 'archimedes.catalyst.net.nz';" . PHP_EOL;
+         \$settings .= "\\\$conf['archimedes_server_key'] = '-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDsqgmiokPIN1nYeUQyMgC/bBUo
 3Kba9Swn4Srm+as8nuZZaN1f7kO6yeNFNGF/2s1aWD0dF/7YIJ8kkdy46rodXcQM
 7BouZ6owmFYFyvgisbSVOp+4WkdoBg3bwo3yl3jC7ObDtG8tLd5kJv1rkHOcf1vF
