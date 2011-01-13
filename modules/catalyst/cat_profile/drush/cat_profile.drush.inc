@@ -61,8 +61,6 @@ CODE;
 
   return $output;
 }
-<<<<<<< HEAD:modules/catalyst/cat_profile/drush/cat_profile.drush.inc
-=======
 
 /**
  * Implementation of hook_dh_make_prebuild().
@@ -187,4 +185,3 @@ function cat_profile_write_ini_file($assoc_arr, $path, $has_sections=FALSE) {
     fclose($handle);
     return true;
 }
->>>>>>> master:modules/catalyst/cat_profile/drush/cat_profile.drush.inc
