@@ -12,15 +12,15 @@ function catalyst_ui_profile_modules() {
     // Core Drupal modules.
     'comment', 'help', 'menu', 'taxonomy', 'dblog', 'path', 'upload',
     // Contributed modules
-    'admin_menu', 'advanced_help', 'admin', 'vertical_tabs', 
+    'advanced_help', 'admin', 'vertical_tabs',
       // Views
-      'views', 'views_ui', 
+      'views', 'views_ui',
       // Image
       'image', 'imageapi', 'imagecache', 'imagecache_ui', 'img_assist', 'imageapi_gd',
       // CCK
-      'content', 'text', 'filefield', 'imagefield', 
+      'content', 'text', 'filefield', 'imagefield',
       // Catalyst tracking
-      'drupal_status', 'catalyst_status',
+      'archimedes', 'cat_profile', 'nagios', 'nagios_nrpe',
   );
 
   return $modules;

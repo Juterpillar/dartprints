@@ -1,0 +1,7 @@
+; $Id: nagios.info,v 1.1 2009/02/03 16:50:59 kbahey Exp $
+name = Nagios NRPE
+description = Exposes Nagios checks to Drush to be run via NRPE
+core = 6.x
+project = "nagios"
+dependancies[] = "nagios"
+
