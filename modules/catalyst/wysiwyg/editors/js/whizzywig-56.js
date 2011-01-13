@@ -1,4 +1,4 @@
-// $Id: whizzywig.js,v 1.4.2.4 2010/10/18 19:53:20 sun Exp $
+// $Id: whizzywig-56.js,v 1.1.4.5 2010/10/18 19:53:20 sun Exp $
 
 var wysiwygWhizzywig = { currentField: null, fields: {} };
 var buttonPath = null;
@@ -56,9 +56,18 @@ var o = function (id) {
  * Attach this editor to a target element.
  */
 Drupal.wysiwyg.editor.attach.whizzywig = function(context, params, settings) {
-  // Assign button images path, if available.
+  // Previous versions used per-button images found in this location,
+  // now it is only used for custom buttons.
   if (settings.buttonPath) {
     window.buttonPath = settings.buttonPath;
+  }
+  // Assign the toolbar image path used for native buttons, if available.
+  if (settings.toolbarImagePath) {
+    btn._f = settings.toolbarImagePath;
+  }
+  // Fall back to text labels for all buttons.
+  else {
+    window.buttonPath = 'textbuttons';
   }
   // Create Whizzywig container.
   wysiwygWhizzywig.currentField = params.field;
@@ -90,17 +99,15 @@ Drupal.wysiwyg.editor.detach.whizzywig = function(context, params) {
     if (!instance) {
       return;
     }
-    var body = instance.contentWindow.document.body;
+    var editingArea = instance.contentWindow.document;
     var $field = $('#' + id);
     // Whizzywig shows the original textarea in source mode.
     if ($field.css('display') == 'block') {
-      body.innerHTML = $field.val();
+      editingArea.body.innerHTML = $field.val();
     }
-    body.innerHTML = tidyH(body.innerHTML);
 
     // Save contents of editor back into textarea.
-    $field.val(window.get_xhtml ? get_xhtml(body) : body.innerHTML);
-    $field.val($field.val().replace(location.href + '#', '#'));
+    $field.val(tidyH(editingArea));
     // Remove editor instance.
     $('#' + id + '-whizzywig').remove();
     whizzies.splice(index, 1);
