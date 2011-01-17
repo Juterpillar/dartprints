@@ -46,6 +46,19 @@ function cat_profile_debian_postinst() {
     $output .= '      symlink("/var/lib/sitedata/" . PACKAGE_NAME . "/cache", $cache_link);' . PHP_EOL;
     $output .= '    }' . PHP_EOL;
   }
+
+  $output .= <<<CODE
+         \$settings .= "\\\$conf['archimedes_server_email'] = 'archimedes@catalyst.net.nz';" . PHP_EOL;
+         //\$settings .= "\\\$conf['archimedes_server_location'] = 'archimedes.catalyst.net.nz';" . PHP_EOL;
+         \$settings .= "\\\$conf['archimedes_server_key'] = '-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDsqgmiokPIN1nYeUQyMgC/bBUo
+3Kba9Swn4Srm+as8nuZZaN1f7kO6yeNFNGF/2s1aWD0dF/7YIJ8kkdy46rodXcQM
+7BouZ6owmFYFyvgisbSVOp+4WkdoBg3bwo3yl3jC7ObDtG8tLd5kJv1rkHOcf1vF
+8k1s+drkUS5erM+jdQIDAQAB
+-----END PUBLIC KEY-----';" . PHP_EOL;
+	 
+CODE;
+
   return $output;
 }
 
@@ -57,7 +70,7 @@ function cat_profile_dh_make_prebuild($dir) {
   if (is_file($ini_file)) {
     $ini = parse_ini_file($ini_file, TRUE);
   }
-  else {
+  else { 
     $ini = array();
   }
   if ($vc_engine = drush_pm_include_version_control(DRUPAL_ROOT)) {
@@ -68,10 +81,10 @@ function cat_profile_dh_make_prebuild($dir) {
         if (!preg_match_all('/remote "([^"]*)"/', $section, $matches)) {
           continue;
         }
-        $ini['git']['remote "' . $matches[1][0] . '"'] = $config['url'];
+        $ini['git']['remote_' . $matches[1][0]] = $config['url'];
       }
     }
-  }
+  }   
   if (drush_get_option('wrms', FALSE)) {
     $ini['wrms']['wr'] = drush_get_option('wrms', array());
   }

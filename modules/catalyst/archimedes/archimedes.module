@@ -1,0 +1,429 @@
+<?php
+
+/**
+* Implementation of hook_menu().
+*/
+function archimedes_menu() {
+  $items = array();
+  $items['admin/reports/archimedes'] = array(
+    'title' => t('Archimedes'),
+    'access arguments' => array('access administration pages'),
+    'page callback' => 'archimedes_out',
+    'description' => t('Administer Archimedes'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/reports/archimedes/update'] = array(
+    'title' => t('Archimedes'),
+    'access arguments' => array('access administration pages'),
+    'page callback' => 'archimedes_send_force',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/reports/archimedes/data'] = array(
+    'title' => t('Data'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['admin/reports/archimedes/settings'] = array(
+    'title' => t('Settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('archimedes_admin'),
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_LOCAL_TASK,
+   );
+   $items['admin/reports/archimedes/export'] = array(
+    'title' => t('XML Export'),
+    'page callback' => 'archimedes_export',
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_LOCAL_TASK,
+   );
+   $items['archimedes/login'] = array(
+    'page callback' => 'archimedes_request_admin_access',
+    'type' => MENU_CALLBACK,
+    // Access to callback is very open.
+    'access arguments' => array('string'),
+    'access callback' => 'is_string',
+   );
+  return $items;
+} // archimedes_menu()
+
+
+function archimedes_out() {
+  module_load_include('php','archimedes','archimedes.class');
+  $owl = archimedes_collect();
+
+  $header = array('Component', 'Value');
+  $rows = array(
+    array(t('Site title'),(string) $owl->getField('title')),
+    array(t('Description'),(string) $owl->getField('body')),
+    array(t('Servername'),(string) $owl->getField('field_servername')),
+    array(t('Web Server'),(string) $owl->getField('field_webserver')),
+    array(t('Web Root'),(string) $owl->getField('field_webroot')),
+    array(t('DB Host'),(string) $owl->getField('field_dbhost')),
+    array(t('DB Name'),(string) $owl->getField('field_dbname')),
+    array(t('Users'),(string) $owl->getField('field_users')),
+    array(t('DB Size'),(string) $owl->getField('field_db_size')),
+    array(t('Site Data Size'),(string) $owl->getField('field_sitedata')),
+    array(t('Webroot Size'),(string) $owl->getField('field_sitesize')),
+    array(t('User Count'),(string) $owl->getField('field_num_users')),
+    array(t('Node Count'),(string) $owl->getField('field_drupal_nodes')),
+  );
+
+  drupal_alter('archimedes_rows',$rows,$owl);
+  $table = theme('table', $header, $rows);
+
+  $header = array('Modules','Version','Description');
+  $modules = theme('table',$header,$owl->getField('field_drupal_mod')->toArray());
+
+  $header = array('Themes','Version','Description');
+  $themes = theme('table',$header,$owl->getField('field_drupal_theme')->toArray());
+
+  $output = '<p>' . t('This page shows the current output from of Archimedes Client for this website. It will not necessarily match what is known by the server.'). '</p>';
+  $output .= '<p>' . l('Force server update','admin/reports/archimedes/update') . ' | ' . l('View data on server', variable_get('archimedes_server_location','')) . '</p>';
+  return $output . $table . $modules . $themes;
+} // archimedes_out()
+
+
+function archimedes_export() {
+  module_load_include('php','archimedes','archimedes.class');
+  $owl = archimedes_collect();
+
+  return '<pre>' . htmlentities($owl->toXML()) . '</pre>';
+
+} // archimedes_export()
+
+/**
+  * @param $server_name The name of the server.
+  * @param $protocol The protocol being used (either http or https).
+  */
+function archimedes_collect() {
+  global $db_url, $db_type, $base_url;
+
+  // find root loacation
+  if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+    $root = $_SERVER['DOCUMENT_ROOT'];
+  }
+  elseif (defined('DRUPAL_ROOT')) {
+    $root = DRUPAL_ROOT;
+  }
+  else {
+    $root = substr(dirname(__FILE__), 0, strpos(dirname(__FILE__), drupal_get_path('module', 'archimedes')));
+  }
+  if (empty($root)) {
+    watchdog('Archimedes', "Cannot find Drupal root", array(), WATCHDOG_ERROR);
+    return;
+  }
+
+  // Produce a unique value to represent this instance of Drupal.
+  $keys = module_invoke_all('archimedes_id');
+  sort($keys);
+  $owl = new Archimedes('drupal', variable_get('site_mail', FALSE), md5(implode('', $keys)));
+
+  $owl->createField('title', variable_get('site_name', "unknown"));
+  $owl->createField('field_drupal_version', VERSION);
+
+  if (variable_get('archimedes_description', '') != '') {
+    $nid = arg(1,drupal_get_normal_path(variable_get('archimedes_description', 'node')));
+    $node = node_load($nid);
+    $body = trim(substr(drupal_html_to_text($node->body,array('b','strong','i','em','p')),0,500));
+    $owl->createField('body', $body);
+  } else {
+    $owl->createField('body', variable_get('site_mission', 'No description has been set.'));
+  }
+
+  $owl->createField('field_servername', $base_url);
+
+  $hostname = archimedes_shell_exec("hostname -f");
+  $values = array();
+  $values[] = archimedes_value($hostname,'nodereference')->addNode(array('title' => $hostname, 'type' => 'host'));
+  $owl->createField('field_webserver', $values)
+      ->invokeFacet();
+  $owl->createField('field_webroot', 'file://' . $root);
+
+  $urls = array();
+  if (!is_array($db_url)) {
+    $urls[] = $db_url;
+  } else {
+    $urls = $db_url;
+  }
+  $values = array();
+  foreach($urls as $url) {
+    $db = parse_url($url);
+    $dbName = substr($db['path'],1);
+    $dbhost = ($db['host'] == 'localhost' || $db['host'] == '127.0.0.1') ? $hostname : $db['host'];
+    $values[] = archimedes_value($dbhost,'nodereference')->addNode(array('title' => $dbhost, 'type' => 'host'));
+  }
+
+  $owl->createField('field_dbhost', $values)
+      ->invokeFacet();
+  $owl->createField('field_dbname', $dbName);
+
+  $user = array(
+    'type' => 'mail',
+    'mailto' => 'mailto:' . db_result(db_query("SELECT u.mail FROM {users} u WHERE uid = 1 LIMIT 1")),
+  );
+  $value = archimedes_value($user['mailto'],'userreference')
+            ->addUser($user);
+  $owl->createField('field_users', array($value))
+      ->invokeFacet();
+
+  switch ($db_type) {
+    case 'pgsql':
+      $owl->createField('field_db_size', db_result(db_query("SELECT pg_database_size('" . $dbName . "')")));
+      break;
+    case 'mysql':
+    case 'mysqli':
+      $rs = db_query("SHOW TABLE STATUS");
+      $size = 0;
+      while ($row = db_fetch_object($rs)) {
+        $size += ($row->Data_length + $row->Index_length);
+      }
+      $owl->createField('field_db_size', $size);
+    break;
+  }
+  $dataSize = preg_split('/[\s]+/',archimedes_shell_exec("du -bsL " . $root . base_path() . file_directory_path()));
+  $owl->createField('field_sitedata', $dataSize[0]);
+
+  $rootSize = preg_split('/[\s]+/',archimedes_shell_exec("du -bsL " . $root . base_path()));
+  $owl->createField('field_sitesize', $rootSize[0] - $dataSize[0]);
+
+  $owl->createField('field_num_users', db_result(db_query("SELECT COUNT(uid) FROM {users}"))-1); // subtract one for public user
+
+  $owl->createField('field_drupal_nodes', db_result(db_query("SELECT COUNT(nid) FROM {node}")));
+
+  $modules = $themes = array();
+  foreach (module_list() as $module) {
+    $info = drupal_parse_info_file(drupal_get_path('module', $module) . '/' . $module . '.info');
+    $node = array(
+      'title'   => $info['name'],
+      'body'    => $info['description'],
+      'field_name' => $module,
+      'field_dru_pkg' => $info['package'],
+      'field_dru_proj' => $info['project'],
+      'field_mod_version' => $info['version'],
+      'field_mod_url' => $info['project status url'],
+      'type'    => 'drupal_module',
+    );
+    if (!isset($node['field_dru_proj']) && isset($node['field_dru_pkg']) && (strpos($node['field_dru_pkg'], 'Core -') !== FALSE)) {
+      $node['field_dru_proj'] = 'drupal';
+    }
+    $value = archimedes_value($node['title'], 'drupalmod')
+              ->addNode($node);
+    $modules[] = $value;
+  }
+
+  $owl->createField('field_drupal_mod', $modules)
+      ->invokeFacet();
+
+
+  $result = db_query("SELECT name FROM {system} WHERE status = 1 AND type = 'theme'");
+  while ($theme = db_result($result)) {
+    $info = drupal_parse_info_file(drupal_get_path('theme', $theme) . '/' . $theme . '.info');
+    $node = array(
+      'title' => $info['name'],
+      'body'  => $info['description'],
+      'field_name' => $theme,
+      'field_mod_version' => $info['version'],
+      'field_dru_proj' => $info['project'],
+      'field_mod_url' => $info['project status url'],
+      'type'  => 'drupal_theme',
+    );
+    if (!isset($node['field_dru_proj']) && in_array($theme, array('bluemarine', 'chameleon', 'garland', 'marvin', 'minnelli', 'pushbutton'))) {
+      // Unfortunately, there's no way to tell if a theme is part of core,
+      // so we must hard-code a list here.
+      $node['field_dru_proj'] = 'drupal';
+    }
+
+    $value = archimedes_value($node['title'], 'drupalmod')
+              ->addNode($node);
+
+    $themes[] = $value;
+  }
+
+
+  $owl->createField('field_drupal_theme', $themes)
+      ->invokeFacet();
+
+  // Allow other modules to add data via hook_archimedes.
+  drupal_alter('archimedes', $owl);
+
+  return $owl;
+} // archimedes_collect()
+
+/**
+ * Implementation of hook_archimedes_id().
+ */
+function archimedes_archimedes_id() {
+  global $db_url, $base_url;
+  $url = (is_array($db_url) ? implode('', $db_url) : $db_url);
+  $urls = parse_url($base_url);
+  return $urls['host'] . $url;
+}
+
+
+function archimedes_admin() {
+  $form = array();
+
+  $form['archimedes_server_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Server email address'),
+    '#default_value' => variable_get('archimedes_server_email', 'archimedes@server.com'),
+    '#description' => t('Set Archimedes server email address.'),
+  );
+
+  $form['archimedes_server_location'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Server web address'),
+    '#default_value' => variable_get('archimedes_server_location', 'http://server.com'),
+    '#description' => t('Set Archimedes server web address.'),
+  );
+
+  $form['archimedes_server_key'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Server Public Key'),
+    '#default_value' => variable_get('archimedes_server_key', ''),
+    '#description' => t('Set the public key for the Archimedes server. This can be found on the Archimedes server administration pages. If left blank mail will be unencrypted.'),
+  );
+  $form['archimedes_description'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Description node'),
+    '#size' => 40,
+    '#default_value' => variable_get('archimedes_description', ''),
+    '#field_prefix' => url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q='),
+    '#description' => t('Set the path where Archimedes can find a description for the site. If left blank, the Site Mission is used.'),
+  );
+
+  $form['archimedes_cron_update'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Cron upate every x days'),
+    '#size' => 5,
+    '#default_value' => variable_get('archimedes_cron_update', 1),
+    '#description' => t('Set Archimedes minimum cron update period.'),
+  );
+  
+  $form['archimedes_cron_first'] = array(
+    '#type' => 'select',
+    '#title' => t('Update on first cron after hour'),
+    '#options' => range(0, 23),
+    '#description' => t('Set the hour at which Archimedes collects and sends its data. This should ideally be a period with minimal traffic.'),
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+  * Send a report to the Archimedes server via email.
+  *
+  * Doesn't use Drupal's messaging system because the communication
+  * with the server is independant of Drupal.
+  *
+  * @param $server_name name of the server
+  * @param $protocol protocol being used (either http or https)
+  */
+function archimedes_send($unencrypt = false, $mail = null) {
+  global $base_url;
+  if($base_url != 'http://default'){ // must have accurate servername
+    module_load_include('php','archimedes','archimedes.class');
+    if (isset($mail)) {
+      $server_email = $mail;
+    } else {
+      $server_email = variable_get('archimedes_server_email','');
+    }
+    if ($unencrypt) {
+      $server_key = '';
+    } else {
+      $server_key = variable_get('archimedes_server_key','');
+    }
+    $site_name  = variable_get('site_name', 'unknown');
+  
+    $owl = archimedes_collect();
+    if ($server_email != '') {
+      $site_name  = variable_get('site_name', 'unknown');
+      if ($owl->sendXML('Archimedes Server <' . $server_email . '>', $site_name, $server_key))
+        drupal_set_message('Update sent successfully via email to '  . $server_email . '. This many take some time to become visible on the server.');
+      else
+        drupal_set_message('Update failed to send for an unknown reason.','error');
+    } else {
+      drupal_set_message('Update failed to send as the ' . l('server email address','admin/reports/archimedes/settings') . ' is not yet set.','error');
+    }
+    
+    variable_set('archimedes_cron_last',time());
+  
+  } else {
+    drupal_set_message('Cannot accurately determine servername. You should set this in settings.php. Update was not sent.','warning');
+  }
+}
+
+/**
+  * Drupal UI callback to force Archimedes client to send a report.
+  */
+function archimedes_send_force() {
+  archimedes_send();
+  drupal_goto('admin/reports/archimedes');
+}
+
+/**
+  * Implementation of hook_cron().
+  */
+function archimedes_cron() {
+  $last_day = strtotime(date('Ymd',variable_get('archimedes_cron_last',0)));
+  $curr_day = strtotime(date('Ymd'));
+  if (time() > $curr_day + variable_get('archimedes_cron_first',1)*3600 && time() > $last_day + variable_get('archimedes_cron_update',1)*86400) {
+    archimedes_send();
+  }
+}
+
+/**
+ * Execute a shell command.
+ *
+ * Abstracted from Drush.
+ */
+function archimedes_shell_exec($cmd) {
+  $args = func_get_args();
+
+  //do not change the command itself, just the parameters.
+  for ($x = 1; $x < sizeof($args); $x++) {
+    $args[$x] = escapeshellarg($args[$x]);
+  }
+  $command = call_user_func_array('sprintf', $args);
+
+  exec($command . ' 2>&1', $output, $result);
+
+  return $output[0];
+} // archimedes_shell_exec()
+
+/**
+ * Request Admin access to this Drupal site.
+ *
+ * If function is successfull, the user will be granted
+ * user uid:1 access.
+ */
+function archimedes_request_admin_access() {
+  global $user;
+  if ($user->uid == 1) {
+    drupal_goto('<front>');
+  }
+  $keys = module_invoke_all('archimedes_id');
+  sort($keys);
+  $hash = md5(implode('', $keys));
+
+  module_load_include('php', 'archimedes', 'archimedes.class');
+
+  $request = new ArchimedesRemoteRequest();
+
+  // State machine.
+  // When a user is validated, this code will execute.
+  if (isset($_SESSION['archimedes_token']) && $request->validateToken($_SESSION['archimedes_token'])) {
+      $user = user_load(array('uid' => 1));
+      unset($_SESSION['archimedes_token']);
+      drupal_set_message("Login from administration server was successful");
+      drupal_goto('<front>');
+  }
+
+  if (!$token = $request->getToken($hash, variable_get('archimedes_server_key',''))) {
+    return drupal_access_denied();
+  }
+
+  $_SESSION['archimedes_token'] = $token;
+
+  $request->validateRemoteUser();
+  return drupal_access_denied();
+}

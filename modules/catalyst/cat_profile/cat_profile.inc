@@ -884,3 +884,50 @@ function cat_profile_update_psql_seqs($table) {
     db_query("SELECT setval('$seq', (SELECT MAX($field) FROM {" . $table . "}), true)");
   }
 }
+
+/**
+ * Reverts (or updates) the site to the latest version of the installed feature
+ * 
+ * @param string $module the feature module name you want to update
+ * @param array $res the update hook return array, to write into
+ * @return return bool true if feature reverted successfully
+ * @author Neil Bertram <neil@catalyst.net.nz>
+ * @see features.drush.inc, the source of much of this code
+ */
+function cat_profile_revert_feature($module, &$res) {
+  if (!function_exists('feature_load')) {
+    $res[] = array('success' => false, 'query' => t('Failed to revert @module feature as features module not installed', array('@module' => $module)));
+    return false;
+  }
+  if (($feature = feature_load($module, TRUE)) && module_exists($module)) {
+    // Find all overridden items
+    module_load_include('inc', 'features', 'features.export');
+
+    $components = array();
+    $states = features_get_component_states(array($feature->name), FALSE);
+    foreach ($states[$feature->name] as $component => $state) {
+      if (in_array($state, array(FEATURES_OVERRIDDEN, FEATURES_NEEDS_REVIEW)) && features_hook($component, 'features_revert')) {
+        $components[] = $component;
+      }
+    }
+
+    if (empty($components)) {
+      $res[] = array('success' => true, 'query' => t('Feature @module already up to date', array('@module' => $module)));
+    }
+    else {
+      foreach ($components as $component) {
+        features_revert(array($module => array($component)));
+        $res[] = array('success' => true, 'query' => t('Reverted @module:@component', array('@module' => $module, '@component' => $component)));
+      }
+    }
+  }
+  else if ($feature) {
+    $res[] = array('success' => false, 'query' => t("Failed to revert @module feature as the module isn't installed", array('@module' => $module)));
+    return false;
+  }
+  else {
+    $res[] = array('success' => false, 'query' => t("Failed to revert @module feature as the module isn't installed", array('@module' => $module)));
+    return false;
+  }
+  return true;
+}
