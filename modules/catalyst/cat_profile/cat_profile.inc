@@ -314,11 +314,14 @@ function cat_profile_enable_updates() {
  * @return array standard .install format
  * @author Neil Bertram <neil@catalyst.net.nz>
  */
-function cat_profile_update_sql() {
+function cat_profile_update_sql($query) {
   $args = func_get_args();
-  $sql = array_shift($args);
-  $res = db_query($sql, $args);
-  return array('success' => $res != false, 'query' => $sql);
+  array_shift($args);
+  if (isset($args[0]) and is_array($args[0])) { // 'All arguments in one array' syntax
+    $args = $args[0];
+  }
+  $res = db_query($query, $args);
+  return array('success' => $res != false, 'query' => $query);
 }
 
 /**
