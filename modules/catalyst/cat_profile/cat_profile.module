@@ -196,7 +196,7 @@ function cat_profile_archimedes_alter(&$owl) {
   }
   // we can also check for debian package ini
   else {
-    $dpkg = archimedes_shell_exec('dpkg -S '. getcwd() . '/index.php'); //change getcwd to something else
+    $dpkg = archimedes_shell_exec('dpkg -S '. archimedes_find_root() . '/index.php');
     $exp = explode(':',$dpkg);
     if ($exp[0] != 'dpkg') {
       $package = $exp[0];
@@ -213,26 +213,20 @@ function cat_profile_archimedes_alter(&$owl) {
       $path = '/etc/' . $exp[0] . '/info.ini';
       if (file_exists($path)) {
         $file = fopen($path, 'r');
-        $remote = '';
         $git = false;
         while (($buffer = fgets($file)) !== false) {
-          if (substr(trim($buffer),0, 7) == '[remote') {
-            preg_match('/"([^"]*)"/', trim($buffer), $matches);
-            $remote = $matches[1];
-          } elseif (!empty($remote)) {
-            if (substr(trim($buffer),0, 3) == 'url') {
-              $data = explode(" ",trim($buffer));
-              $remotes[] = archimedes_value(trim(end($data)),'gitrepo')->setRemoteName($remote);
-              $remote = '';
-            }
-          } elseif (substr(trim($buffer),0, 4) == '[git') {
+          if (trim($buffer) == '[git]') {
             $git = true;
           } elseif ($git) {
             if (substr(trim($buffer),0, 6) == 'commit') {
               preg_match('/"([^"]*)"/', trim($buffer), $matches);
-              if ($hash == '')
-                $hash = $matches[1];
-              $git = false;
+              $hash = $matches[1];
+            } elseif (substr(trim($buffer),0, 7) == 'remote_') {
+              preg_match('/remote_(.*)\s=/', trim($buffer), $matches);
+              $remote = $matches[1];
+              preg_match('/"([^"]*)"/', trim($buffer), $matches);
+              $url = $matches[1];
+              $remotes[] = archimedes_value(trim($url),'gitrepo')->setRemoteName($remote);
             }
           }
         }
@@ -266,10 +260,17 @@ function cat_profile_archimedes_alter(&$owl) {
   //add all catalyst users
   $field = $owl->getField('field_users');
   $result = db_query("SELECT mail FROM {users} WHERE status = 1 AND uid <> 1 AND mail like '%@catalyst.net.nz'"); // exclude root user as already added
+  $users = array();
   while ($row = db_fetch_object($result)) {
+    // remove email alias terms with "+"
+    $mail = preg_replace('/(\+.*)(?=@)/', '', $row->mail);
+    $users[] = $mail;
+  }
+  $users = array_unique($users);
+  foreach ($users as $mail) {
     $user = array(
       'type' => 'mail',
-      'mailto' => 'mailto:' . $row->mail,
+      'mailto' => 'mailto:' . $mail,
     );
     $value = archimedes_value($user['mailto'], 'userreference')
               ->addUser($user);
