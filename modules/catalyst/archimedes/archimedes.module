@@ -199,10 +199,10 @@ function archimedes_collect() {
       'title'   => $info['name'],
       'body'    => $info['description'],
       'field_name' => $module,
-      'field_dru_pkg' => $info['package'],
-      'field_dru_proj' => $info['project'],
+      'field_dru_pkg' => (isset($info['package']) ? $info['package'] : ''),
+      'field_dru_proj' => (isset($info['project']) ? $info['project'] : ''),
       'field_mod_version' => $info['version'],
-      'field_mod_url' => $info['project status url'],
+      'field_mod_url' => (isset($info['project status url']) ? $info['project status url'] : ''),
       'type'    => 'drupal_module',
     );
     if (!isset($node['field_dru_proj']) && isset($node['field_dru_pkg']) && (strpos($node['field_dru_pkg'], 'Core -') !== FALSE)) {
@@ -225,8 +225,8 @@ function archimedes_collect() {
       'body'  => $info['description'],
       'field_name' => $theme,
       'field_mod_version' => $info['version'],
-      'field_dru_proj' => $info['project'],
-      'field_mod_url' => $info['project status url'],
+      'field_dru_proj' => (isset($info['project']) ? $info['project'] : ''),
+      'field_mod_url' => (isset($info['project status url']) ? $info['project status url'] : ''),
       'type'  => 'drupal_theme',
     );
     if (!isset($node['field_dru_proj']) && in_array($theme, array('bluemarine', 'chameleon', 'garland', 'marvin', 'minnelli', 'pushbutton'))) {
@@ -247,10 +247,11 @@ function archimedes_collect() {
 
   $drupal_root = archimedes_find_root();
   $ignore = array('#(\w*/)*sites/\w*/files#');
+  $environment = variable_get('archimedes_site_environment', '');
+  $dir_hash = ($environment != 'development' ? archimedes_directory_hash($drupal_root, $ignore) : 'Directory Hash only used in stable sites (UAT, Staging, Production).');
   if(!empty($drupal_root))  {
-    $owl->createField('field_directory_hash', archimedes_directory_hash($drupal_root, $ignore));
+    $owl->createField('field_directory_hash', $dir_hash);
   }
-
   // Allow other modules to add data via hook_archimedes.
   drupal_alter('archimedes', $owl);
 
@@ -313,6 +314,19 @@ function archimedes_admin() {
     '#title' => t('Update on first cron after hour'),
     '#options' => range(0, 23),
     '#description' => t('Set the hour at which Archimedes collects and sends its data. This should ideally be a period with minimal traffic.'),
+  );
+
+  $form['archimedes_site_environment'] = array(
+    '#type' => 'select',
+    '#title' => t('Site Environment Type'),
+    '#options' => array(
+      'development' => 'Development',
+      'staging' => 'Staging',
+      'uat' =>'UAT',
+      'production' => 'Production'
+    ),
+    '#default_value' => variable_get('archimedes_site_environment', ''),
+    '#description' => t('Select the environment the site is running on.'),
   );
 
   return system_settings_form($form);
