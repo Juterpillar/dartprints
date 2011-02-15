@@ -56,8 +56,10 @@ MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDsqgmiokPIN1nYeUQyMgC/bBUo
 7BouZ6owmFYFyvgisbSVOp+4WkdoBg3bwo3yl3jC7ObDtG8tLd5kJv1rkHOcf1vF
 8k1s+drkUS5erM+jdQIDAQAB
 -----END PUBLIC KEY-----';" . PHP_EOL;
-	 
+
 CODE;
+
+  $output .= '$settings .= \'$conf["archimedes_site_environment"] = "\' . $debconf->get("environment") . \'";\' . PHP_EOL;' . PHP_EOL;
 
   return $output;
 }
