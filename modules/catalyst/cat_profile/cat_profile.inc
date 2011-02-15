@@ -554,7 +554,7 @@ function cat_profile_var_dump_form(&$form_state) {
 /**
   * Implementation of hook_form()
   */
-function cat_profile_mail_redirect_settings_form(&$node, $form_state) {
+function cat_profile_mail_redirect_settings_form() {
   $environment = _cat_profile_mail_redirect_get_environment();
   $disabled = ($environment == 'Production');
 
