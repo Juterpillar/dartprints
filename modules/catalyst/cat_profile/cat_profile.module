@@ -166,11 +166,11 @@ function cat_profile_features_export_alter(&$export, $module_name) {
  * @author Brendan Vercoelen <brendanv@catalyst.net.nz>
  */
 function cat_profile_archimedes_alter(&$owl) {
-  
+
   $hash = '';
   $remotes = array();
   $package = '';
-  
+
   // Is this a git repo?
   // only works for current git repo and not for debian package
   if (file_exists('.git/config')) {
@@ -190,7 +190,7 @@ function cat_profile_archimedes_alter(&$owl) {
       }
     }
     fclose($file);
-                 
+
     // add git hash data
     $hash = archimedes_shell_exec('git log -n 1 | grep ^commit | tr -d commit\ ');
   }
@@ -233,9 +233,9 @@ function cat_profile_archimedes_alter(&$owl) {
         fclose($file);
       }
 
-      // add catalyst environment
-      $field = $owl->createField('field_cat_env', $environment)
-                   ->invokeFacet();
+      // add catalyst environment (using field_site_env instead)
+      //$field = $owl->createField('field_cat_env', $environment)
+      //            ->invokeFacet();
 
       // add debian package
       $field = $owl->createField('field_deb', $package)
@@ -285,7 +285,7 @@ function cat_profile_archimedes_alter(&$owl) {
  */
 function cat_profile_archimedes_rows_alter(&$rows,$owl) {
   $header = array('Remote','URI');
-  
+
   if ($f = $owl->getField('field_git_repo'))
     $rows[] = array('Git Repositories',theme('table',$header,$f->toArray()));
   if ($f = $owl->getField('field_git_hash'))
@@ -294,8 +294,6 @@ function cat_profile_archimedes_rows_alter(&$rows,$owl) {
     $rows[] = array('Mnet', (string) $f);
   if ($f = $owl->getField('field_deb'))
     $rows[] = array('Debian Package', (string) $f);
-  if ($f = $owl->getField('field_cat_env'))
-    $rows[] = array('Environemnt', (string) $f);
 }
 
 /**
