@@ -1,5 +1,8 @@
 <?php
 
+include_once dirname(__FILE__) . '/apachesolr.drush.inc';
+include_once dirname(__FILE__) . '/civicrm.drush.inc';
+
 /**
  * Write code.
  */
