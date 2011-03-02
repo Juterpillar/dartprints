@@ -5,7 +5,7 @@
  */
 function apachesolr_debian_postinst() {
     $settings =  '    // Written by Cat Profile on behalf of apachesolr. //' . PHP_EOL;
-    $settings .= '    $settings .= \'$conf["apachesolr_path"] = "\' . $debconf->get("apachesolr_path") . \'" . PHP_EOL;\'' . PHP_EOL;
+    $settings .= '    $settings .= \'$conf["apachesolr_path"] = "\' . $debconf->get("apachesolr_path") . \'" . PHP_EOL;\';' . PHP_EOL;
     $settings .= '    $settings .= \'$conf["apachesolr_host"] = "\' . $debconf->get("apachesolr_host") . \'" . PHP_EOL;\';' . PHP_EOL;
     $settings .= '    $settings .= \'$conf["apachesolr_port"] = "\' . $debconf->get("apachesolr_port") . \'" . PHP_EOL;\';' . PHP_EOL;
     return $settings;
