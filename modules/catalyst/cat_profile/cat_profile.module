@@ -60,6 +60,38 @@ function cat_profile_menu() {
 }
 
 /**
+ * Implementation of hook_environment().
+ */
+function cat_profile_environment() {
+  $environments = array();
+  $environments['staging'] = array(
+    'label' => t('Staging'),
+    'description' => t('Staging sites are for content creation before publication.'),
+    'allowed' => array(
+      'default' => FALSE,
+      'email' => FALSE,
+    ),
+  );
+  $environments['uat'] = array(
+    'label' => t('UAT'),
+    'description' => t('UAT sites are for user acceptance testing.'),
+    'allowed' => array(
+      'default' => FALSE,
+      'email' => FALSE,
+    ),
+  );
+  $environments['dr'] = array(
+    'label' => t('Disaster Recovery'),
+    'description' => t('Disaster recovery installation of a production site.'),
+    'allowed' => array(
+      'default' => FALSE,
+      'email' => FALSE,
+    ),
+  );
+  return $environments;
+}
+
+/**
  * Implementation of glorious hook_theme for mail redirect shenanigans
  * @author Stuart McDonald after Rohin Knight
  */
