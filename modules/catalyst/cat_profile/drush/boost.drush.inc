@@ -21,7 +21,7 @@ function boost_debian_postinst() {
   $code .= '      }' . PHP_EOL;
   $code .= '    }' . PHP_EOL;
   $code .= '    chown(WEBROOT . "/cache", WEBUSER);' . PHP_EOL;
-  $code .= '    chmod(WEBROOT . "/cache", 0744);' . PHP_EOL;
+  $code .= '    chmod(WEBROOT . "/cache", 0755);' . PHP_EOL;
   return $code;
 }
 
