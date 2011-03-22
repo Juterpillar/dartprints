@@ -6,7 +6,7 @@
 function environment_debian_postinst() {
   $code = '';
   if (module_exists('environment')) {
-    #$settings .= "    file_put_contents(CIVICRM_SETTINGS, \$environment_file);" . PHP_EOL;
+    $settings .= "    \$conf['environment'] = '\"' . \$debconf->get('environment') . '\"' . PHP_EOL;" . PHP_EOL;
     return $settings;
   }
 }
@@ -31,13 +31,13 @@ function environment_debian_templates() {
   // Add templates for environment.
   if (module_exists('environment')) {
     $choices = array();
-    foreach (environment_load() as $env) {
-      $choices[] = $env['label'];
+    foreach (environment_load() as $key => $env) {
+      $choices[] = $key;
     }
     $output .= "Template: __PACKAGE__/environment" . PHP_EOL;
     $output .= "Type: select" . PHP_EOL;
     $output .= "Choices: " . implode(', ', $choices) . PHP_EOL;
-    $output .= "Default: Production" . PHP_EOL;
+    $output .= "Default: production" . PHP_EOL;
     $output .= "Description: What environment is this install?" . PHP_EOL;
     $output .= " Please choice one of " . count($choices) . " environments:" . PHP_EOL;
     $output .= PHP_EOL;
