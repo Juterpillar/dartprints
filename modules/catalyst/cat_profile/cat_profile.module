@@ -236,11 +236,6 @@ function cat_profile_archimedes_alter(&$owl) {
       // load library to talk to debconf
       require_once dirname(__FILE__) .  '/libdebconf.php';
 
-      $debconf = new DrupalDebconf($package);
-
-      // get environment
-      $environment = $debconf->get('environment');
-
       // get data from packages info.ini
       $path = '/etc/' . $exp[0] . '/info.ini';
       if (file_exists($path)) {
@@ -264,10 +259,6 @@ function cat_profile_archimedes_alter(&$owl) {
         }
         fclose($file);
       }
-
-      // add catalyst environment (using field_site_env instead)
-      //$field = $owl->createField('field_cat_env', $environment)
-      //            ->invokeFacet();
 
       // add debian package
       $field = $owl->createField('field_deb', $package)

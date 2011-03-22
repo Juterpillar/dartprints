@@ -22,34 +22,33 @@ function cat_profile_requirements($phase) {
     );
   }
 
-  if($phase == 'install'){
+  if($phase == 'install') {
     module_load_include('inc', 'cat_profile', 'cat_profile');
-    $environment = _cat_profile_mail_redirect_get_environment();
-
-    if($environment == 'Development') {
-      $git = _cat_profile_mail_redirect_shell_exec('git rev-parse --git-dir');
-      if($git == '.git')  {
-        //Development environment with git installed so set up some variables
-        $email = _cat_profile_mail_redirect_shell_exec('git config user.email');
-        variable_set('mail_redirect_default_email', $email);
-        variable_set('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_REDIRECT);
-        drupal_set_message("Mail Redirect: Default email set to $email");
-        drupal_set_message('Mail Redirect: Redirect override set');
-      }
-      else  {
-        //Since default for environment is Development, if git isn't detected then we can't assume anything.
-        $requirements['environment'] = array(
-          'title' => $t('Environment (Mail Redirect)'),
-          'description' => $t('Environment could not be detected, please set up mail redirect'),
-          'severity' => REQUIREMENT_WARNING,
-        );
-      }
-    }
-    else if($environment == 'Production' || $environment == 'UAT')  {
-      //Don't want any redirection going on in production.
-      variable_set('mail_redirect_default_email', '');
-      variable_set('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_DISABLED);
-    }
+    switch (current_environment()) {
+      case 'development':
+        $git = _cat_profile_mail_redirect_shell_exec('git rev-parse --git-dir');
+        if($git == '.git')  {
+          //Development environment with git installed so set up some variables
+          $email = _cat_profile_mail_redirect_shell_exec('git config user.email');
+          variable_set('mail_redirect_default_email', $email);
+          variable_set('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_REDIRECT);
+          drupal_set_message("Mail Redirect: Default email set to $email");
+          drupal_set_message('Mail Redirect: Redirect override set');
+        }
+        else  {
+          //Since default for environment is Development, if git isn't detected then we can't assume anything.
+          $requirements['environment'] = array(
+            'title' => $t('Environment (Mail Redirect)'),
+            'description' => $t('Environment could not be detected, please set up mail redirect'),
+            'severity' => REQUIREMENT_WARNING,
+          );
+        }
+      break;
+      case 'production':
+        //Don't want any redirection going on in production.
+        variable_set('mail_redirect_default_email', '');
+        variable_set('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_DISABLED);
+      break;
   }
   return $requirements;
 }

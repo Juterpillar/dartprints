@@ -3,3 +3,4 @@ description = "Provides a library of helpful functions for building a site profi
 package = "Catalyst"
 version = 6.x-1.0
 core = 6.x
+dependencies[] = environment
