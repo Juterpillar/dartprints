@@ -6,7 +6,7 @@
 function environment_debian_postinst() {
   $code = '';
   if (module_exists('environment')) {
-    $settings .= "    \$conf['environment'] = '\"' . \$debconf->get('environment') . '\"' . PHP_EOL;" . PHP_EOL;
+    $settings .= '    $settings .= \'$conf["environment"] = "\' . $debconf->get("environment") . \'";\' . PHP_EOL;' . PHP_EOL;
     return $settings;
   }
 }
