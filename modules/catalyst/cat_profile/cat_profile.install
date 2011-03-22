@@ -49,6 +49,7 @@ function cat_profile_requirements($phase) {
         variable_set('mail_redirect_default_email', '');
         variable_set('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_DISABLED);
       break;
+    }
   }
   return $requirements;
 }
