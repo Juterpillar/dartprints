@@ -555,8 +555,7 @@ function cat_profile_var_dump_form(&$form_state) {
   * Implementation of hook_form()
   */
 function cat_profile_mail_redirect_settings_form() {
-  $environment = _cat_profile_mail_redirect_get_environment();
-  $disabled = ($environment == 'Production');
+  $disabled = (environment_current == 'production');
 
   if ($disabled){
     drupal_set_message('Mail Redirect is disabled for production environments', 'warning');
@@ -633,34 +632,6 @@ function _cat_profile_mail_redirect_shell_exec($cmd)  {
   exec($command . ' 2>&1', $output, $result);
 
   return $output[0];
-}
-
-/**
-  * Get the current environment from debconf
-  *
-  * @return the environment (Production, Staging, Development, or UAT)
-  * @author Adam Bramley
-  */
-function _cat_profile_mail_redirect_get_environment() {
-  //get the package name, drupal root found through striping last dirs off module location
-  $drupal_root = substr(dirname(__FILE__), 0, strpos(dirname(__FILE__), drupal_get_path('module', 'cat_profile')));
-  $dpkg = _cat_profile_mail_redirect_shell_exec('dpkg -S ' . $drupal_root . '/index.php');
-  $exp = explode(':', $dpkg);
-  if($exp[0] != 'dpkg'){
-    $package = $exp[0];
-
-    //load the library to talk to debconf
-    include libraries_get_path('libdebconf') . '/libdebconf.php';
-    $debconf = new DrupalDebConf($package);
-
-    //get the environment
-    $environment = $debconf->get('environment');
-  }
-  else{
-    //if there is no package assume a dev environment
-    $environment = 'Development';
-  }
-  return $environment;
 }
 
 /**
