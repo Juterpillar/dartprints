@@ -24,7 +24,7 @@ function cat_profile_requirements($phase) {
 
   if($phase == 'install') {
     module_load_include('inc', 'cat_profile', 'cat_profile');
-    switch (current_environment()) {
+    switch (environment_current()) {
       case 'development':
         $git = _cat_profile_mail_redirect_shell_exec('git rev-parse --git-dir');
         if($git == '.git')  {
