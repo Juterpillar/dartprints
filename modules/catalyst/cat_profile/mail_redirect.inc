@@ -47,7 +47,7 @@ function _mail_redirect_block(&$message) {
   */
 function _mail_redirect_redirect(&$message, $redirect_email) {
   if (variable_get('mail_redirect_log_enabled', TRUE)) {
-    watchdog('mail redirection', t('"@mailkey" REDIRECTED FROM @to TO @redir_to', array('@mailkey' => $message['id'], '@to' => $to, '@redir_to' => $redirect_email)));
+    watchdog('mail redirection', t('"@mailkey" REDIRECTED FROM @to TO @redir_to', array('@mailkey' => $message['id'], '@to' => $message['to'], '@redir_to' => $redirect_email)));
   }
 
   $message['subject'] = 'Rerouted email: ' . $message['subject'];
@@ -63,7 +63,7 @@ function _mail_redirect_redirect(&$message, $redirect_email) {
   $msg .= "-----------------------\n";
 
   // Prepend to the body of the email
-  $message['body'] = t($msg, array('@site' => $base_url, '@to' => $message['to'], '@key' => $message['id'])) . $message['body'];
+  $message['body'] = t($msg, array('@site' => $base_url, '@to' => $message['to'], '@key' => $message['id'])) . implode('\n', $message['body']);
 
   $message['to'] = $redirect_email; // finally, we must redirect the email!
 }
