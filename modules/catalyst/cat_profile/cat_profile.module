@@ -8,6 +8,11 @@ function cat_profile_init() {
   // Turn off nagios checks through the web interface.
   $conf['nagios_enable_nagios'] = 0;
 
+  // The settings below rely on the environment module.
+  if (!module_exists('environment')) {
+    return;
+  }
+
   // Force mail redirect if site is not in Production.
   if (environment_current() == 'production') {
     $conf[REROUTE_EMAIL_ENABLE] = 0;
