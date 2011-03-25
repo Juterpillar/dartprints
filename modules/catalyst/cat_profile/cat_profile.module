@@ -48,14 +48,6 @@ function cat_profile_menu() {
       'page arguments' => array('cat_profile_var_dump_form'),
       'file' => 'cat_profile.inc'
     ),
-    'admin/settings/mail-redirect' => array(
-      'title' => 'Mail Redirect Options',
-      'description' => 'Configure mail redirection for staging sites.',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('cat_profile_mail_redirect_settings_form'),
-      'access arguments' => array('administer site configuration'),
-      'file' => 'cat_profile.inc',
-    ),
   );
 }
 
@@ -334,33 +326,4 @@ function cat_profile_elements() {
     )
   );
   return $type;
-}
-
-/**
- * Implementation of hook_mail_alter()
- *
- * @author Stuart McDonald after Rohin Knight
- */
-function cat_profile_mail_alter(&$message) {
-  module_load_include('inc', 'cat_profile', 'mail_redirect');
-
-  $mailkey = $message['id'];
-  $to = $message['to'];
-
-  switch (variable_get('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_DISABLED)) {
-    case MAIL_REDIRECT_OVERRIDE_DISABLED:
-      break;
-
-    case MAIL_REDIRECT_OVERRIDE_ALLOW:
-      _mail_redirect_allow($mailkey, $to);
-      break;
-
-    case MAIL_REDIRECT_OVERRIDE_BLOCK:
-      _mail_redirect_block($mailkey, $to);
-      break;
-
-    case MAIL_REDIRECT_OVERRIDE_REDIRECT:
-      _mail_redirect_redirect($message, _mail_redirect_get_redirect_email());
-      break;
-  }
 }

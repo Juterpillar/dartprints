@@ -4,7 +4,7 @@
  * Implementation of hook_debian_postinst().
  */
 function environment_debian_postinst() {
-  $code = '';
+  $settings = '';
   if (module_exists('environment')) {
     $settings .= '    $settings .= \'$conf["environment"] = "\' . $debconf->get("environment") . \'";\' . PHP_EOL;' . PHP_EOL;
     return $settings;

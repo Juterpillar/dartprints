@@ -1,60 +1,6 @@
 <?php
 
 /**
-  * Implementation of hook_requirements().
-  *
-  * Sets up variables according to system environment.
-  *
-  * @author Adam Bramley
-  */
-function cat_profile_requirements($phase) {
-  $requirements = array();
-  $t = get_t();
-
-  $default_email = variable_get('mail_redirect_default_email','');
-  $override = variable_get('mail_redirect_override','');
-  //if, somehow, the override is set to redirect but the email is empty, an error should be shown
-  if(empty($default_email) && $override == '3'){
-    $requirements['Mail Redirect'] = array(
-      'title' => $t('Mail Redirect'),
-      'description' => $t('Mail redirect is set to redirect but there is no email set to redirect to. Please set an email in admin > settings > Mail Redirect Options'),
-      'severity' => REQUIREMENT_ERROR,
-    );
-  }
-
-  if($phase == 'install') {
-    module_load_include('inc', 'cat_profile', 'cat_profile');
-    switch (environment_current()) {
-      case 'development':
-        $git = _cat_profile_mail_redirect_shell_exec('git rev-parse --git-dir');
-        if($git == '.git')  {
-          //Development environment with git installed so set up some variables
-          $email = _cat_profile_mail_redirect_shell_exec('git config user.email');
-          variable_set('mail_redirect_default_email', $email);
-          variable_set('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_REDIRECT);
-          drupal_set_message("Mail Redirect: Default email set to $email");
-          drupal_set_message('Mail Redirect: Redirect override set');
-        }
-        else  {
-          //Since default for environment is Development, if git isn't detected then we can't assume anything.
-          $requirements['environment'] = array(
-            'title' => $t('Environment (Mail Redirect)'),
-            'description' => $t('Environment could not be detected, please set up mail redirect'),
-            'severity' => REQUIREMENT_WARNING,
-          );
-        }
-      break;
-      case 'production':
-        //Don't want any redirection going on in production.
-        variable_set('mail_redirect_default_email', '');
-        variable_set('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_DISABLED);
-      break;
-    }
-  }
-  return $requirements;
-}
-
-/**
  * Implementation of hook_schema_alter().
  */
 function cat_profile_schema_alter(&$schemas) {

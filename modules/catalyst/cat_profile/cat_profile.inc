@@ -1,10 +1,5 @@
 <?php
 
-define(MAIL_REDIRECT_OVERRIDE_DISABLED, 0);
-define(MAIL_REDIRECT_OVERRIDE_ALLOW, 1);
-define(MAIL_REDIRECT_OVERRIDE_BLOCK, 2);
-define(MAIL_REDIRECT_OVERRIDE_REDIRECT, 3);
-
 /**
  * Install one or more modules (ignoring dependencies!)
  *
@@ -549,89 +544,6 @@ function cat_profile_var_dump_form(&$form_state) {
   }
 
   return $form;
-}
-
-/**
-  * Implementation of hook_form()
-  */
-function cat_profile_mail_redirect_settings_form() {
-  $disabled = (environment_current == 'production');
-
-  if ($disabled){
-    drupal_set_message('Mail Redirect is disabled for production environments', 'warning');
-  }
-
-  $form['#tree'] = TRUE;
-  $form['override'] = array(
-    '#type' => 'select',
-    '#title' => t('Redirect Options'),
-    '#options' => array(t('- Disabled -'), t('Allow all emails through'), t('Block all emails from going through'), t('Redirect all emails to default E-mail address')),
-    '#default_value' => variable_get('mail_redirect_override', MAIL_REDIRECT_OVERRIDE_DISABLED),
-    '#description' => t('This will apply the chosen setting to all outgoing mail.'),
-    '#disabled' => $disabled,
-  );
-  $form['default_email'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Redirect emails to'),
-    '#default_value' => variable_get('mail_redirect_default_email', variable_get('site_mail', '')),
-    '#description' => t('If redirect is chosen, emails will be sent to this address.'),
-    '#disabled' => $disabled,
-  );
-  $form['logging'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Enable Logging'),
-    '#default_value' => variable_get('mail_redirect_log_enabled', TRUE),
-    '#description' => t('Enable logging of mail redirect activity.'),
-    '#disabled' => $disabled,
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Submit'),
-    '#disabled' => $disabled,
-  );
-  return $form;
-}
-
-/**
-  * Implementation of hook_validate()
-  *
-  * @author Adam Bramley
-  */
-function cat_profile_mail_redirect_settings_form_validate($form, $form_state) {
-  $values = $form_state['values'];
-  if($values['override'] == '3')  {
-    if(!eregi("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$", $values['default_email'])) {
-      form_set_error('default_email', 'A valid email address must be entered when using redirection.');
-    }
-  }
-}
-
-/**
-  * Submit handler for cat_profile_mail_redirect_settings_form
-  */
-function cat_profile_mail_redirect_settings_form_submit(&$form, &$form_state) {
-  $values = (object) $form_state['values'];
-
-  variable_set('mail_redirect_override', $values->override);
-  variable_set('mail_redirect_default_email', $values->default_email);
-  variable_set('mail_redirect_log_enabled', $values->logging);
-}
-
-/**
-  * Executes a shell command.
-  */
-function _cat_profile_mail_redirect_shell_exec($cmd)  {
-  $args = func_get_args();
-
-  //do not change the command itself, just the parameters.
-  for ($x = 1; $x < sizeof($args); $x++) {
-    $args[$x] = escapeshellarg($args[$x]);
-  }
-  $command = call_user_func_array('sprintf', $args);
-
-  exec($command . ' 2>&1', $output, $result);
-
-  return $output[0];
 }
 
 /**
