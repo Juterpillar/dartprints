@@ -4,3 +4,4 @@ package = "Catalyst"
 version = 6.x-1.0
 core = 6.x
 dependencies[] = environment
+dependencies[] = reroute_email

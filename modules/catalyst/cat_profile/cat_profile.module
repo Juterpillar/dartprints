@@ -7,6 +7,22 @@ function cat_profile_init() {
   global $conf;
   // Turn off nagios checks through the web interface.
   $conf['nagios_enable_nagios'] = 0;
+
+  // Force mail redirect if site is not in Production.
+  if (environment_current() == 'production') {
+    $conf[REROUTE_EMAIL_ENABLE] = 0;
+  }
+  else {
+    // Only for rerouting if the option hasn't already been set
+    // in the settings.php configuration.
+    if (!isset($conf[REROUTE_EMAIL_ENABLE])) {
+      $conf[REROUTE_EMAIL_ENABLE] = 1;
+    }
+    // Set a Catalyst email address if on is not set.
+    if (!variable_get(REROUTE_EMAIL_ADDRESS, FALSE)) {
+      $conf[REROUTE_EMAIL_ADDRESS] = 'drupaldev@catalyst.net.nz'; 
+    }
+  }
 }
 
 /**
