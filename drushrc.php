@@ -27,6 +27,7 @@
     'cat_profile',
     'environment',
     'archimedes'
+    'reroute_email',
   );
 
 /**

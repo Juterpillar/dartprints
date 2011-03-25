@@ -1,0 +1,101 @@
+<?php
+
+
+define('REROUTE_EMAIL_ADDRESS', 'reroute_email_address');
+define('REROUTE_EMAIL_ENABLE',  'reroute_email_enable');
+
+/**
+ * Implementation of hook_perm().
+ */
+function reroute_email_perm() {
+  return array('administer reroute email');
+}
+
+function reroute_email_menu() {
+  $items = array();
+
+  $items['admin/settings/reroute_email'] = array(
+    'title'              => t('Reroute Email'),
+    'description'        => t('Reroute emails to a test address.'),
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('reroute_email_settings'),
+    'access arguments'   => array('administer reroute email'),
+  );
+
+  return $items;
+}
+
+function reroute_email_settings() {
+  $form[REROUTE_EMAIL_ADDRESS] = array(
+    '#type'          => 'textarea',
+    '#title'         => t('Email addresses'),
+    '#default_value' => variable_get(REROUTE_EMAIL_ADDRESS, ini_get('sendmail_from')),
+    '#cols'          => 35,
+    '#rows'          => 5,
+    '#description'   => t('Provide a list of email addresses to pass through. Any email addresses not on this list will be rerouted to the first address on the list.')
+  );
+  
+  $form[REROUTE_EMAIL_ENABLE] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t('Enable routing'),
+    '#default_value' => variable_get(REROUTE_EMAIL_ENABLE, 1),
+    '#description'   => t('Check this box if you want to enable email rerouting. Uncheck to disable rerouting.'),
+  );  
+
+  return system_settings_form($form);
+}
+
+function reroute_email_mail_alter(&$message) {
+  if (variable_get(REROUTE_EMAIL_ENABLE, 1)) {
+    global $base_url;
+
+    if (!variable_get(REROUTE_EMAIL_ADDRESS, '')) {
+      // If email address not in settings, then do nothing.
+      return;
+    }
+
+    if (empty($message)) {
+      return;
+    }
+  
+    if (!is_array($message)) {
+      return;
+    }
+
+    $mailkey = isset($message['id']) ? $message['id'] : t('<mail id> is missing');
+    $to = isset($message['to']) ? $message['to'] : t('<to> is missing');
+
+    // Suppress Bcc and Cc fields otherwise email will still go out to those addresses
+    if (isset($message['headers']) && is_array($message['headers'])) {
+      if (isset($message['headers']['Bcc'])) {
+        unset($message['headers']['Bcc']);
+      }
+      if (isset($message['headers']['Cc'])) {
+        unset($message['headers']['Cc']);
+      }
+    }
+  
+    // Split the address string on whitespace, ignoring any empty results
+    $addresslist = preg_split('/\s/', variable_get(REROUTE_EMAIL_ADDRESS, ini_get('sendmail_from')), -1, PREG_SPLIT_NO_EMPTY);
+
+    if (in_array($to, $addresslist)) {
+      // To address is in the pass-through list, let it pass through
+      $message['to'] = $to;
+    }
+    else {
+      // Not on the list, so reroute to the first address in the list
+      $message['to'] = $addresslist[0];
+      // Format a message to show at the top
+      $msg[] = t("This email was rerouted.");
+      $msg[] = t("Web site: @site", array('@site' => $base_url));
+      $msg[] = t("Mail key: @key", array('@key' => $mailkey));
+      $msg[] = t("Originally to: @to", array('@to' => $to));
+      $msg[] = "-----------------------";
+
+      // Prepend to the body of the email
+      // -- I really think we should simply this a bit -- Khalid
+      $message['body'] = array_merge($msg, isset($message['body']) ? (is_array($message['body']) ? $message['body'] : array($message['body'])) : array());
+    }
+  }
+}
+
