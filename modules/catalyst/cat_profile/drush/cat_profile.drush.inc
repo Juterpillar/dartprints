@@ -5,6 +5,16 @@ include_once dirname(__FILE__) . '/civicrm.drush.inc';
 include_once dirname(__FILE__) . '/environment.drush.inc';
 
 /**
+ * Default path to Memcache caching plugin.
+ */
+define('MEMCACHE_PLUGIN', realpath(dirname(__FILE__) . '/../../memcache'));
+
+/**
+ * Determine if the memcache cache plugin is available.
+ */
+define('MEMCACHE_AVAILABLE', is_dir(MEMCACHE_PLUGIN));
+
+/**
  * Write code.
  */
 function cat_profile_write_code($code, $indent = 4) {
@@ -65,6 +75,76 @@ CODE;
 
   $output .= '$settings .= \'$conf["archimedes_site_environment"] = "\' . $debconf->get("environment") . \'";\' . PHP_EOL;' . PHP_EOL;
 
+  if (MEMCACHE_AVAILABLE) {
+    $code = array(
+    '     if (trim($debconf->get("memcache_hosts")) != "") {',
+    '        deb_shell_exec("find %s -name memcache.info", WEBROOT);',
+    '        $files = deb_shell_exec_output();',
+    '        if (!empty($files[0])) {',
+    '           $hosts = trim($debconf->get("memcache_hosts"));',
+    '           foreach (explode(" ", $hosts) as $host) {',
+    '             $host = trim($host);',
+    '             $settings .= "\$conf[\'memcache_servers\'][\'$host\'] = \'default\';" . PHP_EOL;',
+    '           }',
+    '           $memcache_dir = str_replace(WEBROOT, ".", dirname($files[0]));',
+    '           if ($debconf->get("memcache_cache", FALSE)) {',
+    '             $settings .= "\$conf[\'cache_inc\'] = \'{$memcache_dir}/memcache.inc\';" . PHP_EOL;',
+    '           }',
+    '           if ($debconf->get("memcache_sessions", FALSE)) {',
+    '             $settings .= "\$conf[\'session_inc\'] = \'{$memcache_dir}/memcache-session.inc\';" . PHP_EOL;',
+    '           }',
+    '        }',
+    '     }',
+    );
+    $output .= implode(PHP_EOL, $code);
+  }
+
+  return $output;
+}
+
+/**
+ * Implementation of hook_templates().
+ */
+function cat_profile_debian_templates() {
+  $output = '';
+  // Add templates for memcache sessions.
+  $output .= "Template: __PACKAGE__/memcache_hosts" . PHP_EOL;
+  $output .= "Type: string" . PHP_EOL;
+  $output .= "Default: " . PHP_EOL;
+  $output .= "Description: Memcache hosts:" . PHP_EOL;
+  $output .= " If you wish to use memcache, list the hosts seperated by spaces in" . PHP_EOL;
+  $output .= " format hostname:port. eg. localhost:11211" . PHP_EOL;
+  $output .= PHP_EOL;
+  $output .= "Template: __PACKAGE__/memcache_cache" . PHP_EOL;
+  $output .= "Type: boolean" . PHP_EOL;
+  $output .= "Default: true" . PHP_EOL;
+  $output .= "Description: Use Memcache for Drupal cache:" . PHP_EOL;
+  $output .= " Do you want to use Memcache as the caching mechinism for Drupal?" . PHP_EOL;
+  $output .= PHP_EOL;
+  $output .= "Template: __PACKAGE__/memcache_sessions" . PHP_EOL;
+  $output .= "Type: boolean" . PHP_EOL;
+  $output .= "Default: true" . PHP_EOL;
+  $output .= "Description: Memcache Sessions:" . PHP_EOL;
+  $output .= " Do you want Memcache to handle Drupal sessions?" . PHP_EOL;
+  return $output;
+}
+
+/**
+ * Implementation of hook_config().
+ */
+function cat_profile_debian_config() {
+  $output = "db_input \$PRIORITY __PACKAGE__/memcache_hosts || true" . PHP_EOL;
+  $output .= "db_go" . PHP_EOL;
+  $output .= "db_get __PACKAGE__/memcache_hosts" . PHP_EOL;
+  $output .= "RET=\${RET// /}" . PHP_EOL;
+  $output .= 'if [ "$RET" == "" ]; then' . PHP_EOL;
+  $output .= "  db_set __PACKAGE__/memcache_cache false" . PHP_EOL;
+  $output .= "  db_set __PACKAGE__/memcache_sessions false" . PHP_EOL;
+  $output .= "else" . PHP_EOL;
+  $output .= "   db_input \$PRIORITY __PACKAGE__/memcache_cache || true" . PHP_EOL;
+  $output .= "   db_input \$PRIORITY __PACKAGE__/memcache_sessions || true" . PHP_EOL;
+  $output .= "fi" . PHP_EOL;
+  $output .= "db_go" . PHP_EOL;
   return $output;
 }
 
