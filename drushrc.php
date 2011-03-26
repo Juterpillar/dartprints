@@ -26,7 +26,7 @@
   $options['dh-make-depends'] = array(
     'cat_profile',
     'environment',
-    'archimedes'
+    'archimedes',
     'reroute_email',
   );
 
