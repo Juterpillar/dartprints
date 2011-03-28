@@ -1,0 +1,5 @@
+name = Cron Queue Client
+description = Handles module's cron invocation and frequency by provisioning them to a beanstalkd queue
+core = 6.x
+package = "Other"
+version = "6.x-dev"
