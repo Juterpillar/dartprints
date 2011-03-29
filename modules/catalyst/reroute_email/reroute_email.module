@@ -55,7 +55,7 @@ function reroute_email_settings_validate($form, $form_state) {
     $addresslist = preg_split('/\s/', $form_state['values']['reroute_email_address'], -1, PREG_SPLIT_NO_EMPTY);
     foreach ($addresslist as $address) {
       if(!eregi("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$", $address)) {
-        form_set_error('reroute_email_address', 'All email addresses must be valid');
+        form_set_error('reroute_email_address', t('All email addresses must be valid'));
       }
     }
   }
@@ -102,14 +102,13 @@ function reroute_email_mail_alter(&$message) {
       // Not on the list, so reroute to the first address in the list
       $message['to'] = $addresslist[0];
       // Format a message to show at the top
-      $msg = t("This email was rerouted.\n");
-      $msg .= t("Web site: @site\n", array('@site' => $base_url));
-      $msg .= t("Mail key: @key\n", array('@key' => $mailkey));
-      $msg .= t("Originally to: @to\n", array('@to' => $to));
-      $msg .= "-----------------------\n";
+      $msg = t("This email was rerouted.") . '\n';
+      $msg .= t("Web site: @site", array('@site' => $base_url)) . '\n';
+      $msg .= t("Mail key: @key", array('@key' => $mailkey)) . '\n';
+      $msg .= t("Originally to: @to", array('@to' => $to)) . '\n';
+      $msg .= "-----------------------" . '\n';
 
       // Prepend to the body of the email
-      // -- I really think we should simply this a bit -- Khalid
       $message['body'] = $msg . (is_array($message['body']) ? implode('\n', $message['body']) : $message['body']);
     }
   }
