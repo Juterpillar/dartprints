@@ -102,14 +102,14 @@ function reroute_email_mail_alter(&$message) {
       // Not on the list, so reroute to the first address in the list
       $message['to'] = $addresslist[0];
       // Format a message to show at the top
-      $msg = t("This email was rerouted.") . '\n';
-      $msg .= t("Web site: @site", array('@site' => $base_url)) . '\n';
-      $msg .= t("Mail key: @key", array('@key' => $mailkey)) . '\n';
-      $msg .= t("Originally to: @to", array('@to' => $to)) . '\n';
-      $msg .= "-----------------------" . '\n';
+      $msg = t("This email was rerouted.") . "\n";
+      $msg .= t("Web site: @site", array('@site' => $base_url)) . "\n";
+      $msg .= t("Mail key: @key", array('@key' => $mailkey)) . "\n";
+      $msg .= t("Originally to: @to", array('@to' => $to)) . "\n";
+      $msg .= "-----------------------" . "\n";
 
       // Prepend to the body of the email
-      $message['body'] = $msg . (is_array($message['body']) ? implode('\n', $message['body']) : $message['body']);
+      $message['body'] = $msg . (is_array($message['body']) ? implode("\n", $message['body']) : $message['body']);
     }
   }
 }
