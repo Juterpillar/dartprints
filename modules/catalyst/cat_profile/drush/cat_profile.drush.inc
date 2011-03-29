@@ -75,29 +75,29 @@ CODE;
 
   $output .= '$settings .= \'$conf["archimedes_site_environment"] = "\' . $debconf->get("environment") . \'";\' . PHP_EOL;' . PHP_EOL;
 
-#  if (MEMCACHE_AVAILABLE) {
-#    $code = array(
-#    '     if (trim($debconf->get("memcache_hosts")) != "") {',
-#    '        deb_shell_exec("find %s -name memcache.info", WEBROOT);',
-#    '        $files = deb_shell_exec_output();',
-#    '        if (!empty($files[0])) {',
-#    '           $hosts = trim($debconf->get("memcache_hosts"));',
-#    '           foreach (explode(" ", $hosts) as $host) {',
-#    '             $host = trim($host);',
-#    '             $settings .= "\$conf[\'memcache_servers\'][\'$host\'] = \'default\';" . PHP_EOL;',
-#    '           }',
-#    '           $memcache_dir = str_replace(WEBROOT, ".", dirname($files[0]));',
-#    '           if ($debconf->get("memcache_cache", FALSE)) {',
-#    '             $settings .= "\$conf[\'cache_inc\'] = \'{$memcache_dir}/memcache.inc\';" . PHP_EOL;',
-#    '           }',
-#    '           if ($debconf->get("memcache_sessions", FALSE)) {',
-#    '             $settings .= "\$conf[\'session_inc\'] = \'{$memcache_dir}/memcache-session.inc\';" . PHP_EOL;',
-#    '           }',
-#    '        }',
-#    '     }',
-#    );
-#    $output .= implode(PHP_EOL, $code);
-#  }
+  if (MEMCACHE_AVAILABLE) {
+    $code = array(
+    '     if (trim($debconf->get("memcache_hosts")) != "") {',
+    '        deb_shell_exec("find %s -name memcache.info", WEBROOT);',
+    '        $files = deb_shell_exec_output();',
+    '        if (!empty($files[0])) {',
+    '           $hosts = trim($debconf->get("memcache_hosts"));',
+    '           foreach (explode(" ", $hosts) as $host) {',
+    '             $host = trim($host);',
+    '             $settings .= "\$conf[\'memcache_servers\'][\'$host\'] = \'default\';" . PHP_EOL;',
+    '           }',
+    '           $memcache_dir = str_replace(WEBROOT, ".", dirname($files[0]));',
+    '           if ($debconf->get("memcache_cache", FALSE)) {',
+    '             $settings .= "\$conf[\'cache_inc\'] = \'{$memcache_dir}/memcache.inc\';" . PHP_EOL;',
+    '           }',
+    '           if ($debconf->get("memcache_sessions", FALSE)) {',
+    '             $settings .= "\$conf[\'session_inc\'] = \'{$memcache_dir}/memcache-session.inc\';" . PHP_EOL;',
+    '           }',
+    '        }',
+    '     }',
+    );
+    $output .= implode(PHP_EOL, $code);
+  }
 
   return $output;
 }
