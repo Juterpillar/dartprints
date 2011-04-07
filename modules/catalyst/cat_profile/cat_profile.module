@@ -25,7 +25,7 @@ function cat_profile_init() {
     }
     // Set a Catalyst email address if on is not set.
     if (!variable_get(REROUTE_EMAIL_ADDRESS, FALSE)) {
-      $conf[REROUTE_EMAIL_ADDRESS] = 'drupaldev@catalyst.net.nz'; 
+      $conf[REROUTE_EMAIL_ADDRESS] = 'drupal-reroute@catalyst.net.nz';
     }
   }
 }
