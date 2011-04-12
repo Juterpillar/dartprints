@@ -49,6 +49,23 @@
  */
 
 /**
+ * @group Catalyst Drupal
+ */
+
+/**
+ * Prevent Catalyst Drupal maintained modules from being updated by drush.
+ */
+ $command_specific['upc']['lock'] = array(
+   'nagios',
+   'environment',
+   'reroute_email',
+ );
+
+/**
+ * @EndGroup Catalyst Drupal
+ */
+
+/**
  * Load local drush config at a global scope relative to
  * this Drupal installation.
  */
