@@ -1,0 +1,90 @@
+<?php
+
+/**
+ * Implementation of hook_schema_alter().
+ */
+function cat_profile_schema_alter(&$schemas) {
+  foreach ($schemas as $table_name => &$schema) {
+    $function = 'cat_profile_schema_' . $table_name . '_alter';
+    if (function_exists($function)) {
+      $function($schema);
+    }
+  }
+}
+
+/**********
+ *  Core  *
+ *********/
+
+/**
+ * Define available static fields in {url_alias}.
+ */
+function cat_profile_schema_url_alias_alter(&$schema) {
+  $schema['cat_profile_export_exclude'] = array('pid');
+}
+
+/***********
+ * Contrib *
+ ***********/
+
+/**
+ * Define available static fields in {workflows}.
+ */
+function cat_profile_schema_workflows_alter(&$schema) {
+  $schema['cat_profile_export'] = array(
+    'workflow_states' => 'wid',
+    'workflow_type_map' => 'wid',
+  );
+}
+
+/**
+ * Define available static fields in {workflow_states}.
+ */
+function cat_profile_schema_workflow_states_alter(&$schema) {
+  $schema['cat_profile_export'] = array(
+    'workflow_transitions' => 'sid',
+  );
+}
+
+/**
+ * Define available static fields in {workflow_type_map}.
+ */
+function cat_profile_schema_workflow_type_map_alter(&$schema) {
+  // Schema requires primary keys to be able to usefully be able to
+  // update the data.
+  if (!isset($schema['primary key'])) {
+    $schema['primary key'] = array('type', 'wid');
+  }
+}
+
+/**
+ * Define available static fields in {homebox_default}.
+ */
+function cat_profile_schema_homebox_default_alter(&$schema) {
+  // All fields in this table can be made static.
+  $schema['cat_profile_static_fields'] = array_keys($schema['fields']);
+}
+
+/**
+ * Define available static fields in {homebox_pages}.
+ */
+function cat_profile_schema_homebox_pages_alter(&$schema) {
+  // All fields in this table can be made static.
+  $schema['cat_profile_static_fields'] = array_keys($schema['fields']);
+  $schema['cat_profile_export'] = array(
+    'homebox_default' => 'pid',
+  );
+}
+
+/**
+ * Define available static fields in {ckeditor_roles}
+ */
+function cat_profile_schema_ckeditor_role_alter(&$schema) {
+}
+
+/**
+ * Define available static fields in {ckeditor_settings}
+ */
+function cat_profile_schema_ckeditor_settings_alter(&$schema) {
+}
+
