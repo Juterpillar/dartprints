@@ -169,7 +169,7 @@ function cat_profile_archimedes_alter(&$owl) {
   $field = $owl->getField('field_users');
   $result = db_query("SELECT mail FROM {users} WHERE status = 1 AND uid <> 1 AND mail like '%@catalyst.net.nz'"); // exclude root user as already added
   $users = array();
-  while ($row = db_fetch_object($result)) {
+  foreach ($result as $row) {
     // remove email alias terms with "+"
     $mail = preg_replace('/(\+.*)(?=@)/', '', $row->mail);
     $users[] = $mail;
