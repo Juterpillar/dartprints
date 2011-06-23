@@ -1,5 +1,4 @@
 <?php
-// $Id: environment.admin.inc,v 1.1.2.3 2010/12/15 16:10:33 grayside Exp $
 
 /**
  * @file
@@ -10,7 +9,8 @@ function environment_admin_settings() {
   $form = array();
 
   $env_override = variable_get('environment_override', NULL);
-  $env_current = environment_current();
+  $env_current = environment_current(NULL);
+
   if ($env_override) {
     $form['environment'] = array(
       '#type'  => 'item',
@@ -25,11 +25,24 @@ function environment_admin_settings() {
   }
   else {
     $form['environment'] = array(
-      '#type'          => 'select',
-      '#title'         => t('Environment'),
-      '#options'       => _environment_options(),
-      '#default_value' => $env_current,
-    );
+      '#title' => t('Environment state'),
+      '#type' => 'fieldset',
+      '#tree' => TRUE,
+    );    
+    foreach (environment_workflow_load() as $name => $workflow) {
+      $default = isset($env_current[$name]) ? $env_current[$name] : '';
+      $form['environment'][$name] = array(
+        '#title' => t('@workflow environment workflow', array('@workflow' => $workflow['label'])),
+        '#description'   => $workflow['description'], 
+        '#type'          => 'select',
+        '#options'       => _environment_state_options($name),
+        '#default_value' => $default,
+      );
+      
+      if (!$default) {
+        drupal_set_message(t('Not in a valid state for the @workflow workflow. Saving this form will put it into a valid state if one exists.', array('@workflow' => $workflow['label'])), 'warning');
+      }
+    }
   }
   $form['environment_require_override'] = array(
     '#type'          => 'checkbox',
@@ -45,12 +58,23 @@ function environment_admin_settings() {
  * Submit callback to switch environment if changed.
  */
 function environment_switch_environment_submit($form, &$form_state) {
-  if (!$form_state['values']['environment_require_override']
-    && $form['environment']['#default_value'] != $form_state['values']['environment']) {
-
-    $result = environment_switch($form_state['values']['environment'], $form['environment']['#default_value']);
-    foreach ($result['messages'] as $message) {
-      drupal_set_message(t(check_plain($message)));
+  if (!$form_state['values']['environment_require_override']) {
+    foreach (element_children($form['environment']) as $element) {
+      if ($form['environment'][$element]['#default_value'] != $form_state['values']['environment'][$element]) {
+        $result = environment_switch($form_state['values']['environment'][$element]);
+        if ($result) {
+          $original = environment_load($form['environment'][$element]['#default_value']);
+          $new = environment_load($form_state['values']['environment'][$element]);
+          $workflow = environment_workflow_load($element);
+          drupal_set_message(t("Successfully switched @workflow workflow from the '@original' to the '@new' environment.",
+                               array(
+                                '@workflow' => $workflow['label'],
+                                '@original' => $original['label'],
+                                '@new' => $new['label'],
+                               ))
+                            );
+        }
+      }
     }
   }
 }
@@ -76,6 +100,12 @@ function environment_switch_confirm(&$form_state, $environment) {
  * Handler for switch environment confirmation.
  */
 function environment_switch_confirm_submit($form, &$form_state) {
-  environment_switch($form['environment']['#value'], environment_current());
+  if (isset($form['environment'])) {
+    foreach ($form['environment'] as $workflow => $environment) {
+      if ($form_state['values']['environment'][$workflow] != $form['environment'][$workflow]) {
+        environment_switch($form_state['values']['environment'][$workflow], $workflow);
+      }
+    }
+  }
   $form_state['redirect'] = 'admin/settings/environment';
 }

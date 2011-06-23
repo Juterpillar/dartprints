@@ -15,7 +15,7 @@ SSL=/bin/false
 
 PROGNAME=`/usr/bin/basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
-REVISION=`echo '$Revision: 1.1.2.13 $' | sed -e 's/[^0-9.]//g'`
+REVISION=`echo '$Revision$' | sed -e 's/[^0-9.]//g'`
 
 temp=`mktemp`
 
@@ -87,7 +87,6 @@ while test -n "$1"; do
       ;;
     -S)
       SSL=/bin/true
-      shift
       ;;
     -t) 
       timeout=$2

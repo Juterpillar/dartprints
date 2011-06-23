@@ -12,7 +12,6 @@ function archimedes_menu() {
     'description' => t('Administer Archimedes'),
     'type' => MENU_NORMAL_ITEM,
   );
-
   $items['admin/reports/archimedes/data'] = array(
     'title' => t('Data'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
@@ -48,8 +47,6 @@ function archimedes_menu() {
 } // archimedes_menu()
 
 
-
-
 function archimedes_out() {
   module_load_include('php','archimedes','archimedes.class');
   $owl = archimedes_collect();
@@ -69,18 +66,17 @@ function archimedes_out() {
     array(t('Webroot Size'),(string) $owl->getField('field_sitesize')),
     array(t('User Count'),(string) $owl->getField('field_num_users')),
     array(t('Node Count'),(string) $owl->getField('field_drupal_nodes')),
-    array(t('Directory Hash'), (string) $owl->getField('field_directory_hash')),
-    array(t('Environment'), (string) $owl->getField('field_site_env')),
+    array(t('Directory Hash'), (string) $owl->getFIeld('field_directory_hash')),
+    array(t('Site Environment'), (string) $owl->getField('field_site_env')),
   );
-
   drupal_alter('archimedes_rows',$rows,$owl);
-  $table = theme('table', $header, $rows);
+  $table = theme('table', array('header' => $header, 'rows' => $rows));
 
   $header = array('Modules','Version','Description');
-  $modules = theme('table',$header,$owl->getField('field_drupal_mod')->toArray());
+  $modules = theme('table', array('header' => $header, 'rows' => $owl->getField('field_drupal_mod')->toArray()));
 
   $header = array('Themes','Version','Description');
-  $themes = theme('table',$header,$owl->getField('field_drupal_theme')->toArray());
+  $themes = theme('table', array('header' => $header, 'rows' => $owl->getField('field_drupal_theme')->toArray()));
 
   $output = '<p>' . t('This page shows the current output from of Archimedes Client for this website. It will not necessarily match what is known by the server.'). '</p>';
   return $output . $table . $modules . $themes;
@@ -110,7 +106,7 @@ function archimedes_find_root() {
 }
 
 function archimedes_collect() {
-  global $db_url, $db_type, $base_url;
+  global $databases,  $base_url;
 
   $root = archimedes_find_root();
 
@@ -146,14 +142,16 @@ function archimedes_collect() {
   $owl->createField('field_webroot', 'file://' . $root);
 
   $urls = array();
-  if (!is_array($db_url)) {
-    $urls[] = $db_url;
+  if (!is_array($databases['default'])) {
+    $urls[] = $databases['default'];
   } else {
-    $urls = $db_url;
+    $urls = $databases['default'];
   }
   $values = array();
   foreach($urls as $url) {
-    $db = parse_url($url);
+    //format into url like drupal 6
+    $db_url = $url['driver'] . '://' . $url['username'] . ':' . $url['password'] . '@' . $url['host'] . '/' . $url['database'];
+    $db = parse_url($db_url);
     $dbName = substr($db['path'],1);
     $dbhost = ($db['host'] == 'localhost' || $db['host'] == '127.0.0.1') ? $hostname : $db['host'];
     $values[] = archimedes_value($dbhost,'nodereference')->addNode(array('title' => $dbhost, 'type' => 'host'));
@@ -165,47 +163,48 @@ function archimedes_collect() {
 
   $user = array(
     'type' => 'mail',
-    'mailto' => 'mailto:' . db_result(db_query("SELECT u.mail FROM {users} u WHERE uid = 1 LIMIT 1")),
+    'mailto' => 'mailto:' . db_query("SELECT u.mail FROM {users} u WHERE uid = 1 LIMIT 1")->fetchField(),
   );
   $value = archimedes_value($user['mailto'],'userreference')
             ->addUser($user);
   $owl->createField('field_users', array($value))
       ->invokeFacet();
 
+  $db_type = $databases['default']['default']['driver'];
   switch ($db_type) {
     case 'pgsql':
-      $owl->createField('field_db_size', db_result(db_query("SELECT pg_database_size('" . $dbName . "')")));
+      $owl->createField('field_db_size', db_query("SELECT pg_database_size('" . $dbName . "')")->fetchField());
       break;
     case 'mysql':
     case 'mysqli':
-      $rs = db_query("SHOW TABLE STATUS");
+      $rs = db_query('SHOW TABLE STATUS');
       $size = 0;
-      while ($row = db_fetch_object($rs)) {
-        $size += ($row->Data_length + $row->Index_length);
+      while ($row = $rs->fetchObject()) {
+        $size += ($row->data_length + $row->index_length);
       }
       $owl->createField('field_db_size', $size);
     break;
   }
-  $dataSize = preg_split('/[\s]+/',archimedes_shell_exec("du -bsL " . $root . base_path() . file_directory_path()));
+  $dataSize = preg_split('/[\s]+/',archimedes_shell_exec("du -bsL " . drupal_realpath('public://')));
   $owl->createField('field_sitedata', $dataSize[0]);
 
   $rootSize = preg_split('/[\s]+/',archimedes_shell_exec("du -bsL " . $root . base_path()));
   $owl->createField('field_sitesize', $rootSize[0] - $dataSize[0]);
 
-  $owl->createField('field_num_users', db_result(db_query("SELECT COUNT(uid) FROM {users}"))-1); // subtract one for public user
+  $owl->createField('field_num_users', db_query("SELECT COUNT(uid) FROM {users}")->fetchField()-1); // subtract one for public user
 
-  $owl->createField('field_drupal_nodes', db_result(db_query("SELECT COUNT(nid) FROM {node}")));
+  $owl->createField('field_drupal_nodes', db_query("SELECT COUNT(nid) FROM {node}")->fetchField());
 
   $modules = $themes = array();
   foreach (module_list() as $module) {
     $info = drupal_parse_info_file(drupal_get_path('module', $module) . '/' . $module . '.info');
     $node = array(
-      'title'   => $info['name'],
-      'body'    => $info['description'],
+      'title'   => (isset($info['name']) ? $info['name'] : ''),
+      'body'    => (isset($info['description']) ? $info['description'] : ''),
       'field_name' => $module,
       'field_dru_pkg' => (isset($info['package']) ? $info['package'] : ''),
-      'field_dru_proj' => (isset($info['project']) ? $info['project'] : ''),
-      'field_mod_version' => $info['version'],
+      'field_dru_proj' => (isset($info['project']) ? $info['project'] : 'drupal'),
+      'field_mod_version' => (isset($info['version']) ? $info['version'] : ''),
       'field_mod_url' => (isset($info['project status url']) ? $info['project status url'] : ''),
       'type'    => 'drupal_module',
     );
@@ -222,14 +221,14 @@ function archimedes_collect() {
 
 
   $result = db_query("SELECT name FROM {system} WHERE status = 1 AND type = 'theme'");
-  while ($theme = db_result($result)) {
+  while ($theme = $result->fetchField()) {
     $info = drupal_parse_info_file(drupal_get_path('theme', $theme) . '/' . $theme . '.info');
     $node = array(
-      'title' => $info['name'],
-      'body'  => $info['description'],
+      'title'   => (isset($info['name']) ? $info['name'] : ''),
+      'body'    => (isset($info['description']) ? $info['description'] : ''),
       'field_name' => $theme,
-      'field_mod_version' => $info['version'],
-      'field_dru_proj' => (isset($info['project']) ? $info['project'] : ''),
+      'field_mod_version' => (isset($info['version']) ? $info['version'] : ''),
+      'field_dru_proj' => (isset($info['project']) ? $info['project'] : 'drupal'),
       'field_mod_url' => (isset($info['project status url']) ? $info['project status url'] : ''),
       'type'  => 'drupal_theme',
     );
@@ -245,23 +244,22 @@ function archimedes_collect() {
     $themes[] = $value;
   }
 
+
   $owl->createField('field_drupal_theme', $themes)
       ->invokeFacet();
 
-  $environment = environment_current(TRUE, 'label');
-  $owl->createField('field_site_env', $environment);
-
   $drupal_root = archimedes_find_root();
+
+  //array of regex for files to be ignored
   $ignore = array('#(\w*/)*sites/\w*/files#');
-  
-  // The point of the directory hash is to record the state of the deployed code base.
-  // If the code base changes, then the site could have been redeployed or hacked! However,
-  // in development scenarios, the code changes very frequently so we don't care to change
-  // it.
+
+  $environment = variable_get('archimedes_site_environment', '');
   $dir_hash = ($environment != 'Development' ? archimedes_directory_hash($drupal_root, $ignore) : 'Directory Hash only used in stable sites (UAT, Staging, Production).');
   if(!empty($drupal_root))  {
     $owl->createField('field_directory_hash', $dir_hash);
   }
+
+  $owl->createField('field_site_env', $environment);
 
   // Allow other modules to add data via hook_archimedes.
   drupal_alter('archimedes', $owl);
@@ -274,7 +272,7 @@ function archimedes_collect() {
  */
 function archimedes_archimedes_id() {
   global $db_url, $base_url;
-  $environment = environment_current();
+  $environment = variable_get('archimedes_site_environment', '');
   $url = (is_array($db_url) ? implode('', $db_url) : $db_url);
   $urls = parse_url($base_url);
   return $urls['host'] . $url . $environment;
@@ -297,7 +295,6 @@ function archimedes_admin() {
     '#default_value' => variable_get('archimedes_server_key', ''),
     '#description' => t('Set the public key for the Archimedes server. This can be found on the Archimedes server administration pages. If left blank mail will be unencrypted.'),
   );
-
   $form['archimedes_description'] = array(
     '#type' => 'textfield',
     '#title' => t('Description node'),
@@ -323,18 +320,18 @@ function archimedes_admin() {
     '#description' => t('Set the hour at which Archimedes collects and sends its data. This should ideally be a period with minimal traffic.'),
   );
 
-  $options = array();
-  foreach (environment_load() as $key => $env) {
-    $options[$key] = $env['label'];
-  }
-
   $form['archimedes_site_environment'] = array(
     '#type' => 'select',
     '#title' => t('Site Environment Type'),
-    '#options' => $options,
-    '#default_value' => environment_current(TRUE, 'label'),
-    '#description' => t('This variable is controlled by the Environment module. See !link to alter the environment.', array('!link' => l('the environment admin page', 'admin/settings/environment'))),
-    '#disabled' => TRUE,
+    '#options' => array(
+      'Development' => 'Development',
+      'Staging' => 'Staging',
+      'UAT' =>'UAT',
+      'Production' => 'Production',
+      'DR' => 'DR',
+    ),
+    '#default_value' => variable_get('archimedes_site_environment', 'Development'),
+    '#description' => t('Select the environment the site is running on. Note: this will likely be overwritten by any settings in settings.php'),
   );
 
   $form['archimedes_allow_administer'] = array(
@@ -355,7 +352,7 @@ function archimedes_admin() {
   * @author Adam Bramley <adam@catalyst.net.nz>
   */
 function archimedes_admin_validate($node) {
-  $key = $node['archimedes_server_email']['#post']['archimedes_server_key'];
+  $key = $node['archimedes_server_key']['#value'];
   if (!empty($key) && !openssl_pkey_get_public($key)) {
     form_set_error('archimedes_server_key', t('The public key you provided is invalid'));
   }
@@ -390,7 +387,7 @@ function archimedes_send($unencrypt = false, $mail = null) {
     if ($server_email != '') {
       $site_name  = variable_get('site_name', 'unknown');
       if ($owl->sendXML('Archimedes Server <' . $server_email . '>', $site_name, $server_key))
-        drupal_set_message('Update sent successfully via email to '  . $server_email . '. This may take some time to become visible on the server.');
+        drupal_set_message('Update sent successfully via email to '  . $server_email . '. This many take some time to become visible on the server.');
       else
         drupal_set_message('Update failed to send for an unknown reason.','error');
     } else {

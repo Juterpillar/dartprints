@@ -1,8 +1,17 @@
 <?php
+/**
+ * @file
+ * Install, update and uninstall functions for the nagios module.
+ *
+ */
 
-// $Id: nagios.install,v 1.1 2009/02/03 16:50:59 kbahey Exp $
+
 // Copyright 2009 Khalid Baheyeldin http://2bits.com
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function nagios_uninstall() {
   variable_del('nagios_updates');
   variable_del('nagios_ua');

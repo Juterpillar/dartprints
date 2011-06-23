@@ -1,5 +1,4 @@
 <?php
-// $Id: environment.drush.inc,v 1.1.2.5 2011/02/09 18:29:11 grayside Exp $
 
 /**
  * @file Executes the environment_switch capabilities
@@ -11,10 +10,13 @@
 function environment_drush_command() {
   $items = array();
 
-  $items['environment'] = array(
+  $items['environment-show'] = array(
     'description' => 'Show the current environment state.',
+    'arguments' => array(
+      'workflow' => 'Specify the workflow whose current environment state you wish to check. Leave blank for all workflows.',
+    ),
     'drupal dependencies' => array('environment'),
-    'aliases' => array('env'),
+    'aliases' => array('env', 'env-show', 'environment'),
   );
 
   $items['environment-switch'] = array(
@@ -55,8 +57,9 @@ function environment_drush_help($section) {
 /**
  * Implementation of drush_hook_COMMAND for environment.
  */
-function drush_environment() {
-  drush_print(environment_drush_render_environment());
+function drush_environment_show($workflow = NULL) {
+  $func = drush_get_context('DRUSH_PIPE') ? 'drush_print_pipe' : 'drush_print_table';
+  $func(environment_drush_render_current($workflow));
 }
 
 /**
@@ -81,7 +84,7 @@ function drush_environment_switch($target_env = NULL) {
     $environments = environment_load();
     $options = array();
     foreach ($environments as $name => $env) {
-      $options[$name] = environment_drush_render_environment($name);
+      $options[$name] = environment_drush_render_environment($env);
     }
     $target_env = drush_choice($options);
   }
@@ -90,53 +93,79 @@ function drush_environment_switch($target_env = NULL) {
   }
 
   $force = drush_get_option('force');
-  $current_env  = environment_current();
-  $env_override = variable_get('environment_override', NULL);
 
-  if (!$force && $current_env == $target_env) {
-    drush_log("The current environment is already set to '{$current_env}'.", 'error');
-    drush_print("To force the environment switch to run anyway, use the '--force' flag.");
-    return;
-  }
-  elseif (!$force && $env_override && $target_env != $env_override) {
-    drush_log("The current environment is overriden with '{$env_override}'.", 'error');
-    drush_print("To force the environment switch to run anyway, use the '--force' flag.");
-    return;
-  }
-
-  drush_print("Switching the environment to {$target_env}...");
-
+  drush_print(dt("Switching the environment to !environment", array('!environment' => $target_env)));
   if (!drush_get_context('DRUSH_SIMULATE')) {
-    $result   = environment_switch($target_env, $force);
-    $messages = $result['messages'];
-
-    foreach ($messages as $message) {
-      drush_print('- ' . $message);
-    }
+    $result = environment_switch($target_env, $force);
   }
   else {
-    $result['result'] = TRUE;
+    $result = TRUE;
   }
 
-  if ($result['result']) {
-    drush_log('Done.', 'success');
+  if ($result) {
+    drupal_set_message('Done.', 'success');
   }
   else {
-    drush_log('Failed.', 'error');
+    drupal_set_message('Failed.', 'error');
   }
 }
 
 /**
- * Helper function to render an environment as a descriptive one-liner.
+ * Render all current environment states with full description.
  *
- * @param $env
- *  Name of an environment to render.
- *
+ * @param $workflow
+ *  Optional; specify a single workflow whose environment to check. Otherwise
+ *  show all states.
+ * 
  * @return
- *  String describing the environment.
+ *  Array of strings describing the environment(s).
  */
-function environment_drush_render_environment($env = NULL) {
-  $environment = !$env ? environment_current(TRUE) : environment_load($env);
-  $description = isset($environment['description']) ? ': ' . $environment['description'] : '';
-  return $environment['label'] . ' (' . $environment['name'] . ')' . $description;
+function environment_drush_render_current($workflow = NULL) {
+  $environments = (array) variable_get('environment', array());
+  foreach ($environments as $environment) {
+    $states[] = environment_load($environment);
+  }
+
+  $items = array();
+  foreach ($states as $state) {
+    if (is_null($workflow) || $state['workflow'] == $workflow) {
+      if (!drush_get_context('DRUSH_PIPE')) {
+        $items[] = array(environment_drush_render_environment($state, is_null($workflow), TRUE));
+      }
+      else {
+        $items[] = $state['name'];
+      }
+    }
+  }
+
+  return $items;
+}
+
+/**
+ * Render the specified environment definition as a descriptive one-liner.
+ *
+ * @param $state
+ *  Array defining an environment state.
+ * @param $show_workflow
+ *  Optional; default to TRUE. If there are more than one workflows defined in
+ *  the system, will prefix the return with the workflow's label. If set to FALSE
+ *  this is skipped. This is separate from $verbose because you could want a
+ *  verbose description in a workflow-specific context.
+ * @param $verbose
+ *  Optional; defaults to FALSE. If TRUE, will include the environment
+ *  description.
+ * 
+ * @return
+ *  String describing the specified environment.
+ */
+function environment_drush_render_environment($state, $show_workflow = TRUE, $verbose = FALSE) {
+  $description = $verbose && isset($state['description']) ? ': ' . $state['description'] : '';
+  $prefix = '';
+
+  if ($show_workflow) {
+    $workflows = environment_workflow_load();
+    $prefix .= count($workflows) > 1 ? $workflows[$state['workflow']]['label'] . ' : ' : '';
+  }
+
+  return $prefix . $state['label'] . ' (' . $state['name'] . ')' . $description;
 }

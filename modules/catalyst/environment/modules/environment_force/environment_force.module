@@ -1,5 +1,4 @@
 <?php
-// $Id: environment_force.module,v 1.1.2.1 2010/12/15 16:17:21 grayside Exp $
 
 /**
  * @file
@@ -12,7 +11,7 @@
 function environment_force_init() {
   $env_override = variable_get('environment_override', NULL);
   if ($env_override) {
-    $current_env  = variable_get('environment', NULL);
+    $current_env  = environment_current();
     if ($current_env != $env_override) {
       environment_switch($env_override);
     }

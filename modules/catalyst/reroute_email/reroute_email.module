@@ -1,22 +1,34 @@
 <?php
 
+/**
+ * @file
+ * Reroute Email module
+ */
 
 define('REROUTE_EMAIL_ADDRESS', 'reroute_email_address');
-define('REROUTE_EMAIL_ENABLE',  'reroute_email_enable');
+define('REROUTE_EMAIL_ENABLE',   'reroute_email_enable');
 
 /**
- * Implementation of hook_perm().
+ * Implements of hook_permission().
  */
-function reroute_email_perm() {
-  return array('administer reroute email');
+function reroute_email_permission() {
+  return array(
+    'administer reroute email' =>  array(
+      'title' => t('Administer Reroute Email'),
+      'description' => t('Administer the Reroute Email module.'),
+    ),
+  );
 }
 
+/**
+ * Implements hook_menu().
+ */
 function reroute_email_menu() {
   $items = array();
 
-  $items['admin/settings/reroute_email'] = array(
-    'title'              => t('Reroute Email'),
-    'description'        => t('Reroute emails to a test address.'),
+  $items['admin/config/development/reroute_email'] = array(
+    'title'              => 'Reroute Email',
+    'description'        => 'Reroute emails to a test address.',
     'page callback'      => 'drupal_get_form',
     'page arguments'     => array('reroute_email_settings'),
     'access arguments'   => array('administer reroute email'),
@@ -25,6 +37,9 @@ function reroute_email_menu() {
   return $items;
 }
 
+/**
+ * Settings form.
+ */
 function reroute_email_settings() {
   $form[REROUTE_EMAIL_ADDRESS] = array(
     '#type'          => 'textarea',
@@ -61,6 +76,12 @@ function reroute_email_settings_validate($form, $form_state) {
   }
 }
 
+
+/**
+ * Implements hook_mail_alter() to change the destination of outgoing emails.
+ * @param array $message
+ *   An array containing message with keys like 'to', 'from', 'body'.
+ */
 function reroute_email_mail_alter(&$message) {
   if (variable_get(REROUTE_EMAIL_ENABLE, 1)) {
     global $base_url;
@@ -102,14 +123,15 @@ function reroute_email_mail_alter(&$message) {
       // Not on the list, so reroute to the first address in the list
       $message['to'] = $addresslist[0];
       // Format a message to show at the top
-      $msg = t("This email was rerouted.") . "\n";
-      $msg .= t("Web site: @site", array('@site' => $base_url)) . "\n";
-      $msg .= t("Mail key: @key", array('@key' => $mailkey)) . "\n";
-      $msg .= t("Originally to: @to", array('@to' => $to)) . "\n";
-      $msg .= "-----------------------" . "\n";
-
+      $msg = t("This email was rerouted.");
+      $msg .= "\n" . t("Web site: @site", array('@site' => $base_url));
+      $msg .= "\n" . t("Mail key: @key", array('@key' => $mailkey));
+      $msg .= "\n" . t("Originally to: <@to>", array('@to' => $to));
+      $msg .= "\n-----------------------";
+      $msg = check_plain($msg);
+      // $msg = drupal_html_to_text($msg);
       // Prepend to the body of the email
-      $message['body'] = $msg . (is_array($message['body']) ? implode("\n", $message['body']) : $message['body']);
+      array_unshift($message['body'], $msg);
     }
   }
 }

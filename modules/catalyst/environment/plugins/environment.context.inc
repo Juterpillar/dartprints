@@ -1,5 +1,4 @@
 <?php
-// $Id: environment.context.inc,v 1.1.2.1 2010/12/15 16:24:26 grayside Exp $
 
 /**
  * @file
