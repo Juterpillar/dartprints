@@ -147,8 +147,8 @@ function cat_profile_archimedes_alter(&$owl) {
                  ->invokeFacet();
                  
   // add mnet data
-  $field = $owl->createField('field_mdl_ref', '[[MNET YET TO BE DONE]]')
-               ->invokeFacet();
+  // $field = $owl->createField('field_mdl_ref', '[[MNET YET TO BE DONE]]')
+  //             ->invokeFacet();
   
   //add all catalyst users
   $field = $owl->getField('field_users');
@@ -184,10 +184,6 @@ function cat_profile_archimedes_rows_alter(&$rows,$owl) {
     $rows[] = array('Git Repositories',theme('table',$header,$f->toArray()));
   if ($f = $owl->getField('field_git_hash'))
     $rows[] = array('Git Hash', (string) $f);
-  if ($f = $owl->getField('field_mdl_ref'))
-    $rows[] = array('Mnet', (string) $f);
-  if ($f = $owl->getField('field_deb'))
-    $rows[] = array('Debian Package', (string) $f);
 }
 
 /**
