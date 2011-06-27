@@ -63,21 +63,6 @@ function cat_profile_environment() {
 }
 
 /**
- * Implementation of glorious hook_theme for mail redirect shenanigans
- * @author Stuart McDonald after Rohin Knight
- */
-function cat_profile_theme() {
-  return array(
-    'mailkey_table' => array(
-      'arguments' => array(
-        'element' => null,
-      ),
-      'file' => 'cat_profile.theme.inc',
-    ),
-  );
-}
-
-/**
  * Implementation of hook_archimedes_alter
  *
  * Add addional fields into the archimedes export.
