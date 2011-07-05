@@ -169,6 +169,16 @@ function cat_profile_archimedes_alter(&$owl) {
               ->addUser($user);
     $field->addValue($value);
   }
+
+  // WRMS Integration
+  // Integrate WRMS systems by picking up settings set in drushrc.php files.
+  if (function_exists('drush_get_option')) {
+    $wrms_systems = drush_get_option('wrms_systems', array());
+    foreach ($wrms_systems as &$systemid) {
+      $systemid = archimedes_value($systemid);
+    }
+    $owl->createField('wrms_systems', $wrms_systems);
+  }
 }
 
 /**
