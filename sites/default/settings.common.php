@@ -16,4 +16,4 @@ MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDsqgmiokPIN1nYeUQyMgC/bBUo
 // Archimedes URL. When using HTTP to post reports to the archimedes server,
 // this will be the URL to post to. As this is an internal URL, this is only
 // applicable to development environments within the Catalyst LAN.
-$conf['archimedes_server_url'] = "http://archimedes.wgtn.cat-it.co.nz/archimedes-server/update";
+$conf['archimedes_server_url'] = "https://archimedes.wgtn.cat-it.co.nz/archimedes-server/update";
