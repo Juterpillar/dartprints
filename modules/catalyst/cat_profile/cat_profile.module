@@ -59,6 +59,14 @@ function cat_profile_environment() {
       'email' => FALSE,
     ),
   );
+  $environments['ci'] = array(
+    'label' => t('Continuous Integration'),
+    'description' => t('CI Environment e.g. Jenkins'),
+    'allowed' => array(
+      'default' => FALSE,
+      'email' => FALSE,
+    ),
+  );
   return $environments;
 }
 
