@@ -62,20 +62,17 @@ function reroute_email_settings() {
 
 /**
  * Implementation of hook_validate().
- *
- * @author Adam Bramley <adam@catalyst.net.nz>
  */
 function reroute_email_settings_validate($form, $form_state) {
   if ($form_state['values']['reroute_email_enable'] == 1) {
     $addresslist = preg_split('/\s/', $form_state['values']['reroute_email_address'], -1, PREG_SPLIT_NO_EMPTY);
     foreach ($addresslist as $address) {
-      if(!eregi("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$", $address)) {
-        form_set_error('reroute_email_address', t('All email addresses must be valid'));
+      if(!valid_email_address($address)) {
+        form_set_error('reroute_email_address', t('@address is not a valid email address', array('@address' => $address)));
       }
     }
   }
 }
-
 
 /**
  * Implements hook_mail_alter() to change the destination of outgoing emails.
