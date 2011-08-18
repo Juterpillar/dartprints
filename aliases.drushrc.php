@@ -17,3 +17,22 @@ $aliases['diy11'] = array(
   'cfgmgr-services' => 'conf.settings.drupal,conf.vhost.nginx,conf.upstream.nginx,conf.pool.php-fpm,conf.crond.cron,conf',
   'dh-version-suffix' => 'diy11',
 );
+
+/**
+ * Setup database connectivity and symlinks
+ */
+$aliases['basic11'] = array(
+  'dh-api' => 2,
+  'cfgmgr-services' => 'conf.settings.drupal',
+  'dh-version-suffix' => 'basic11',
+);
+
+/**
+ * Just the code base, no configuration.
+ */
+$aliases['noconfig11'] = array(
+  'dh-api' => 2,
+  'dh-version-suffix' => 'noconfig11',
+);
+
+
