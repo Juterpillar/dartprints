@@ -34,7 +34,6 @@
  * Make recommendations of modules to install before building a debian package.
  */
   $options['dh-make-recommends'] = array(
-    'boost',
   );
 
 /**
