@@ -31,6 +31,36 @@ function cat_profile_init() {
 }
 
 /**
+ * Implementation of hook_menu().
+ */
+function cat_profile_menu() {
+  $items = array();
+
+  // Health check for load balanced environments.
+  $items['healthcheck'] = array(
+    'page callback' => 'cat_profile_healthcheck',
+    'access callback' => 'cat_profile_healthcheck_access',
+    'file' => 'cat_profile.pages.inc',
+  );
+  return $items;
+}
+
+function cat_profile_healthcheck_access() {
+  $return = TRUE;
+  drupal_alter('cat_profile_healthcheck', $return);
+  return $return;
+}
+
+/**
+ * Implementation of hook_healthcheck_modules_alter().
+ */
+function cat_profile_healthcheck_modules_alter(&$modules) {
+  if (module_exists('apachesolr') && !in_array('apachesolr', $modules)) {
+    $modules[] = 'apachesolr';
+  }
+}
+
+/**
  * Implementation of hook_environment().
  */
 function cat_profile_environment() {
