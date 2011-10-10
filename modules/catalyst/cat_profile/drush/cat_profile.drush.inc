@@ -15,6 +15,56 @@ define('MEMCACHE_PLUGIN', realpath(dirname(__FILE__) . '/../../memcache'));
 define('MEMCACHE_AVAILABLE', is_dir(MEMCACHE_PLUGIN));
 
 /**
+ * Implementation of hook_drush_command().
+ */
+function cat_profile_drush_command() {
+  $items['loadbalance-enable'] = array(
+    'description' => "Enable load balancing if environment is ok.",
+    'examples' => array(
+      'drush lbe' => 'Sets a file used to indicate to the load balancer that the web server may serve pages.',
+    ),
+    'aliases' => array('lbe'),
+  );
+  $items['loadbalance-disable'] = array(
+    'description' => "Disable load balancing if environment is ok.",
+    'examples' => array(
+      'drush lbe' => 'Removes a file used to indicate to the load balancer that the web server may serve pages.',
+    ),
+    'aliases' => array('lbd'),
+  );
+  return $items;
+}
+
+/**
+ * Enabled load balancing capability.
+ */
+function drush_cat_profile_loadbalance_enable() {
+  $filepath = variable_get('loadbalance_enable_file', '/etc/' . basename(DRUPAL_ROOT) . '/loadbalance_enable');
+  if (file_exists($filepath)) {
+    return drush_log("Loadbalancing already enabled", 'status');
+  }
+  if (!is_writeable(dirname($filepath))) {
+    return drush_set_error("Cannot write to file path: $filepath. Load balanceing cannot be enabled.");
+  }
+  file_put_contents($filepath, "Remove this file to disable loadbalancing\n");
+  drush_log("Server set to enable load balancing. Please check " . url('healthcheck', array('absolute' => TRUE)) . " is responding without errors", 'success');
+}
+
+/**
+ * Disabled load balancing capability.
+ */
+function drush_cat_profile_loadbalance_disable() {
+  $filepath = variable_get('loadbalance_enable_file', '/etc/' . basename(DRUPAL_ROOT) . '/loadbalance_enable');
+  if (!file_exists($filepath)) {
+    return drush_log("Loadbalancing already disabled", 'status');
+  }
+  if (!unlink($filepath)) {
+    return drush_set_error("Cannot unlink file path: $filepath. Load balanceing cannot be disabled.");
+  }
+  drush_log("Load balancing disabled", 'success');
+}
+
+/**
  * Write code.
  */
 function cat_profile_write_code($code, $indent = 4) {
