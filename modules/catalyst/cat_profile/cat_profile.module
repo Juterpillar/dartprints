@@ -38,6 +38,7 @@ function cat_profile_menu() {
 
   // Health check for load balanced environments.
   $items['healthcheck'] = array(
+    'title' => 'Healthcheck',
     'page callback' => 'cat_profile_healthcheck',
     'access callback' => 'cat_profile_healthcheck_access',
     'file' => 'cat_profile.pages.inc',
