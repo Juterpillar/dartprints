@@ -2696,7 +2696,9 @@ function ip_address() {
         $untrusted = array_diff($forwarded, $reverse_proxy_addresses);
 
         // The right-most IP is the most specific we can trust.
-        $ip_address = array_pop($untrusted);
+        if (!empty($untrusted)) {
+          $ip_address = array_pop($untrusted);
+        }
       }
     }
   }
