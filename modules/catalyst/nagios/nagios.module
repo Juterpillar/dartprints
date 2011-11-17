@@ -4,10 +4,10 @@
 // Copyright 2009 Khalid Baheyeldin http://2bits.com
 
 // Defines to be used by this modules and others that use its hook_nagios()
-define('NAGIOS_STATUS_OK',        0);
-define('NAGIOS_STATUS_UNKNOWN',   1);
-define('NAGIOS_STATUS_WARNING',   2);
-define('NAGIOS_STATUS_CRITICAL', 3);
+define('NAGIOS_STATUS_OK',       variable_get('nagios_status_ok_value', 0));
+define('NAGIOS_STATUS_WARNING',  variable_get('nagios_status_warning_value', 1));
+define('NAGIOS_STATUS_CRITICAL', variable_get('nagios_status_critical_value', 2));
+define('NAGIOS_STATUS_UNKNOWN',  variable_get('nagios_status_unknown_value', 3));
 
 /**
  * Mapping of defines to text strings that Nagios understands
@@ -51,11 +51,14 @@ function nagios_menu() {
     'access arguments' => array('administer site configuration'),
   );
 
-  $items['nagios'] = array(
+  $path = variable_get('nagios_page_path', 'nagios');
+  $callback = variable_get('nagios_page_callback', 'nagios_status_page');
+  $items[$path] = array(
     'type' => MENU_SUGGESTED_ITEM,
     'title' => 'Nagios status page',
-    'page callback' => 'nagios_status_page',
-    'access callback' => TRUE,
+    'page callback' => $callback,
+    'access callback' => 'variable_get',
+    'access arguments' => array('nagios_enable_status_page', TRUE),
   );
   return $items;
 }
@@ -69,7 +72,7 @@ function nagios_settings($form, &$form_state) {
   $form['nagios_ua'] = array(
     '#type' => 'textfield',
     '#title' => t('Unique ID'),
-    '#default_value' => variable_get('nagios_ua', 'Nagios'),
+    '#default_value' => variable_get('nagios_ua', ''),
     '#description' => t('Restrict sending information to requests identified by this Unique ID. You should change this to some unique string for your organization, and configure Nagios accordingly. This makes Nagios data less accessible to curious users. See the README.txt for more details.'),
   );
 
@@ -77,6 +80,63 @@ function nagios_settings($form, &$form_state) {
     '#type' => 'checkbox',
     '#title' => t('Show outdated module/theme name?'),
     '#default_value' => variable_get('nagios_show_outdated_names', TRUE),
+  );
+
+  $form['nagios_status_page'] = array(
+    '#type'        => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed'   => FALSE,
+    '#title'       => t('Status page settings'),
+    '#description' => t('Control the availability and location of the HTTP status page. NOTE: you must clear the menu cache for changes to these settings to register.'),
+  );
+  $form['nagios_status_page']['nagios_enable_status_page'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable status page?'),
+    '#default_value' => variable_get('nagios_enable_status_page', TRUE),
+  );
+  $form['nagios_status_page']['nagios_page_path'] = array(
+    '#type' => 'textfield',
+    '#title' =>   t('Nagios page path'),
+    '#description' => t('Enter the path for the Nagios HTTP status page. It must be a valid Drupal path.'),
+    '#default_value' => variable_get('nagios_page_path', 'nagios'),
+  );
+  $form['nagios_status_page']['nagios_page_callback'] = array(
+    '#type' => 'textfield',
+    '#title' =>   t('Nagios page callback'),
+    '#description' => t('Enter the name of the callback function to be used by the Nagios status page. Take care and be sure this function exists before clearing the menu cache!'),
+    '#default_value' => variable_get('nagios_page_callback', 'nagios_status_page'),
+  );
+
+  $form['nagios_error_levels'] = array(
+    '#type'        => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed'   => FALSE,
+    '#title'       => t('Error levels'),
+    '#description' => t('Set the values to be used for error levels when reporting to Nagios.'),
+  );
+  $form['nagios_error_levels']['nagios_status_ok_value'] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('Status OK'),
+    '#description' => t('The value to send to Nagios for a Status OK message.'),
+    '#default_value' => variable_get('nagios_status_ok_value', 0),
+  );
+  $form['nagios_error_levels']['nagios_status_warning_value'] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('Warning'),
+    '#description' => t('The value to send to Nagios for a Warning message.'),
+    '#default_value' => variable_get('nagios_status_warning_value', 1),
+  );
+  $form['nagios_error_levels']['nagios_status_critical_value'] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('Critical'),
+    '#description' => t('The value to send to Nagios for a Critical message.'),
+    '#default_value' => variable_get('nagios_status_critical_value', 2),
+  );
+  $form['nagios_error_levels']['nagios_status_unknown_value'] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('Unknown'),
+    '#description' => t('The value to send to Nagios for an Unknown message.'),
+    '#default_value' => variable_get('nagios_status_unknown_value', 3),
   );
 
   $form[$group] = array(
@@ -115,6 +175,9 @@ function nagios_settings($form, &$form_state) {
  * Callback for the nagios status page
  */
 function nagios_status_page() {
+  // Make sure this page is not cached.
+  drupal_page_is_cacheable(FALSE);
+
   $args = func_get_args();
   // Module to run checks for.
   $module = array_shift($args);
@@ -126,21 +189,9 @@ function nagios_status_page() {
 
   $codes = nagios_status();
 
-  // Check the unique ID string first
-  $ua = variable_get('nagios_ua', 'Nagios');
-  if ($_SERVER['HTTP_USER_AGENT'] != $ua) {
-    // This is not an authorized unique id, so just return this default status.
-    $nagios_data = array(
-      'nagios' => array(
-        'DRUPAL' => array(
-          'status' => NAGIOS_STATUS_UNKNOWN,
-          'type' => 'state',
-          'text' => t('Unauthorized'),
-        ),
-      ),
-    );
-  }
-  else {
+  // Check the unique ID string and access permissions first
+  $ua = variable_get('nagios_ua', '');
+  if (user_access('administer site configuration') || $_SERVER['HTTP_USER_AGENT'] == $ua) {
     // Authorized so calling other modules
     if ($module) {
       // A specific module has been requested.
@@ -150,6 +201,18 @@ function nagios_status_page() {
     else {
       $nagios_data = nagios_invoke_all('nagios');
     }
+  }
+  else {
+    // This is not an authorized unique id or uer, so just return this default status.
+    $nagios_data = array(
+      'nagios' =>  array(
+        'DRUPAL' => array(
+          'status' => NAGIOS_STATUS_UNKNOWN,
+          'type'   => 'state',
+          'text'   => t('Unauthorized'),
+        ),
+      ),
+    );
   }
 
   // Find the highest level to be the overall status
@@ -339,33 +402,50 @@ function nagios_check_requirements() {
   $reqs = module_invoke_all('requirements', 'runtime');
 
   // Check the requirements as to the most severe status
+  $descriptions = array();
   $severity = REQUIREMENT_OK;
+  $unknown = FALSE;
+  $min_severity = variable_get('nagios_min_report_severity', NAGIOS_STATUS_OK) - 1;
   foreach ($reqs as $key => $requirement) {
+    if (preg_match('/^No information is available/', $requirement['description'])) {
+      $unknown = TRUE;
+      continue;
+    }
+    // TODO: see update.report.inc for reporting which modules
+
     if (isset($requirement['severity'])) {
-      // Ignore update_core warning if update cache has expired and nagios_cron_duration has not passed by yet
-      if ($key == 'update_core' && $requirement['severity'] == REQUIREMENT_WARNING && $requirement['reason'] == UPDATE_UNKNOWN) {
-        $grace = 60 * variable_get('nagios_cron_duration', 60);
-        $expire = db_query("SELECT expire FROM {cache_update} WHERE cid = :cid", array(':cid' => 'update_available_releases'))->fetchField();
-        if ($expire && REQUEST_TIME < ($expire + $grace)) {
-          continue;
-        }
+      // Ignore update_core warning if update check is pending
+      if (($key == 'update_core' || $key == 'update_contrib') && $requirement['severity'] == REQUIREMENT_ERROR && $requirement['reason'] == UPDATE_FETCH_PENDING) {
+        continue;
       }
-      if ($requirement['severity'] > $severity) {
-        $severity = $requirement['severity'];
-        $desc = $requirement['title'];
+      if ($requirement['severity'] >= $min_severity) {
+        if ($requirement['severity'] > $severity) {
+          $severity = $requirement['severity'];
+        }
+        $descriptions[] = $requirement['title'];
       }
     }
   }
+  $desc = join(', ', $descriptions);
 
   // Create a status to pass back, and a text description too
   switch ($severity) {
     case REQUIREMENT_OK:
     case REQUIREMENT_INFO:
-      $data = array(
-        'status' => NAGIOS_STATUS_OK,
-        'type' => 'state',
-        'text' => '',
-      );
+      if ($unknown == FALSE) {
+        $data = array(
+          'status' => NAGIOS_STATUS_OK,
+          'type' => 'state',
+          'text' => '',
+        );
+      }
+      else {
+        $data = array(
+          'status' => NAGIOS_STATUS_UNKNOWN, 
+          'type'   => 'state',
+          'text'   => '',
+        );
+      }
       break;
     case REQUIREMENT_WARNING:
       $data = array(
