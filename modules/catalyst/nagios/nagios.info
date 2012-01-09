@@ -3,9 +3,9 @@ description = Exposes a page that Nagios can monitor and drush hooks for NRPE.
 core = 7.x
 package = "Monitoring"
 
-; Information added by drupal.org packaging script on 2011-06-01
-version = "7.x-1.x-dev"
+; Information added by drupal.org packaging script on 2011-10-04
+version = "7.x-1.0"
 core = "7.x"
 project = "nagios"
-datestamp = "1306930886"
+datestamp = "1317769306"
 
