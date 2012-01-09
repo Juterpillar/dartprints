@@ -21,6 +21,11 @@ function cat_profile_healthcheck() {
     $errors[] = 'Slave database not responding.';
   }
 
+  // Prevent cron from showing u as a failure as its not a reason
+  // to drop a server from the load balancer.
+  global $conf;
+  $conf['cron_last'] = REQUEST_TIME;
+
   $check_modules = array('system');
   drupal_alter('healthcheck_modules', $check_modules);
 
