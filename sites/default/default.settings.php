@@ -511,4 +511,10 @@ $conf['404_fast_html'] = '<html xmlns="http://www.w3.org/1999/xhtml"><head><titl
  */
 # $conf['allow_authorize_operations'] = FALSE;
 
-require 'settings.common.php';
+// Include config that is common to dev and prod (Catalyst thing)
+if (file_exists('settings.common.php')) {
+    require 'settings.common.php';
+}
+else if (file_exists('./sites/default/settings.common.php')) {
+    require './sites/default/settings.common.php';
+}
