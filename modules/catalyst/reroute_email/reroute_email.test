@@ -39,7 +39,7 @@ class RerouteEmailTestCase extends DrupalWebTestCase {
 
     // Configure to reroute normally to rerouted@example.com.
     $post = array(
-      'reroute_email_address' => $reroute_destination,
+      'reroute_email_to' => $reroute_destination,
       'reroute_email_enable' => TRUE,
       'reroute_email_enable_message' => TRUE,
     );
