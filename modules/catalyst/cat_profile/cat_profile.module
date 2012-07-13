@@ -18,14 +18,14 @@ function cat_profile_init() {
     $conf[REROUTE_EMAIL_ENABLE] = 0;
   }
   else {
-    // Only for rerouting if the option hasn't already been set
+    // Only force rerouting if the option hasn't already been set
     // in the settings.php configuration.
     if (!isset($conf[REROUTE_EMAIL_ENABLE])) {
       $conf[REROUTE_EMAIL_ENABLE] = 1;
     }
-    // Set a Catalyst email address if on is not set.
-    if (!variable_get(REROUTE_EMAIL_ADDRESS, FALSE)) {
-      $conf[REROUTE_EMAIL_ADDRESS] = 'drupal-reroute@catalyst.net.nz';
+    // Set a Catalyst email address if one is not set.
+    if (variable_get(REROUTE_EMAIL_WHITELIST, FALSE) === FALSE) {
+      $conf[REROUTE_EMAIL_WHITELIST] = 'drupal-reroute@catalyst.net.nz';
     }
   }
 }

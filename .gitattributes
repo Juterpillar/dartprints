@@ -1,0 +1,21 @@
+# used to remove files from deployment using `git archive`
+# git files
+.gitattributes export-ignore
+.gitignore export-ignore
+# zen 5.x files
+sites/all/themes/*/sass export-ignore
+sites/all/themes/*/sass-extensions export-ignore
+sites/all/themes/*/images-source export-ignore
+sites/all/themes/*/fonts export-ignore
+sites/all/themes/*/config.rb export-ignore
+# text files
+*README.txt export-ignore
+*README export-ignore
+*LICENSE.txt export-ignore
+COPYRIGHT.txt export-ignore
+CHANGELOG.txt export-ignore
+UPGRADE.txt export-ignore
+web.config export-ignore
+MAINTAINERS.txt export-ignore
+INSTALL*.txt export-ignore
+
