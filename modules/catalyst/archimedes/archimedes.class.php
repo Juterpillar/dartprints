@@ -206,7 +206,7 @@ class Archimedes {
     $message .= $attachment . "\r\n";
     $message .= '--' . $boundary . "\r\n";
 
-    return mail($email, 'XML Update from' . ' ' . $site_name, $message, $headers);
+    return mail($email, 'XML Update from' . ' ' . (string) $this->getField('title'), $message, $headers);
   }
 
   /**
