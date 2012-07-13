@@ -134,57 +134,25 @@ function cat_profile_archimedes_alter(&$owl) {
     fclose($file);
 
     // add git hash data
-    $hash = archimedes_shell_exec('git log -n 1 | grep ^commit | tr -d commit\ ');
+    $hash = trim(`git log -n 1 | grep ^commit | tr -d commit\ `);
+
+    // add git hash data
+    if ($hash != '')
+      $field = $owl->createField('field_git_hash', $hash);
+    
+    // add git repos
+    if (!empty($remotes))
+      $field = $owl->createField('field_git_repo',$remotes)
+                   ->invokeFacet();
+             
   }
   // we can also check for debian package ini
-  else {
-    $dpkg = archimedes_shell_exec('dpkg -S '. archimedes_find_root() . '/index.php');
-    $exp = explode(':',$dpkg);
-    if ($exp[0] != 'dpkg') {
-      $package = $exp[0];
-
-      // load library to talk to debconf
-      require_once DRUPAL_ROOT .  '/sites/all/libraries/libdebconf/libdebconf.php';
-
-      // get data from packages info.ini
-      $path = '/etc/' . $exp[0] . '/info.ini';
-      if (file_exists($path)) {
-        $file = fopen($path, 'r');
-        $git = false;
-        while (($buffer = fgets($file)) !== false) {
-          if (trim($buffer) == '[git]') {
-            $git = true;
-          } elseif ($git) {
-            if (substr(trim($buffer),0, 6) == 'commit') {
-              preg_match('/"([^"]*)"/', trim($buffer), $matches);
-              $hash = $matches[1];
-            } elseif (substr(trim($buffer),0, 7) == 'remote_') {
-              preg_match('/remote_(.*)\s=/', trim($buffer), $matches);
-              $remote = $matches[1];
-              preg_match('/"([^"]*)"/', trim($buffer), $matches);
-              $url = $matches[1];
-              $remotes[] = archimedes_value(trim($url),'gitrepo')->setRemoteName($remote);
-            }
-          }
-        }
-        fclose($file);
-      }
-
-      // add debian package
-      $field = $owl->createField('field_deb', $package)
-                   ->invokeFacet();
-    }
-  }
-  
-  // add git hash data
-  if ($hash != '')
-    $field = $owl->createField('field_git_hash', $hash);
-  
-  // add git repos
-  if (!empty($remotes))
-    $field = $owl->createField('field_git_repo',$remotes)
+  elseif ($version = variable_get('dpkg_version', FALSE)) {
+    // add debian package
+    $field = $owl->createField('field_deb', $version)
                  ->invokeFacet();
-                 
+  }
+        
   // add mnet data
   // $field = $owl->createField('field_mdl_ref', '[[MNET YET TO BE DONE]]')
   //             ->invokeFacet();
