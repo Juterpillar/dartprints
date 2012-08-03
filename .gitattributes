@@ -17,7 +17,7 @@ scripts export-ignore
 profiles/minimal export-ignore
 profiles/standard export-ignore
 profiles/testing export-ignore
-# text files
+# general text files
 *README.txt export-ignore
 *readme.md export-ignore
 *README.md export-ignore
@@ -33,6 +33,7 @@ CHANGELOG.txt export-ignore
 *INSTALL.html export-ignore
 *TODO.txt export-ignore
 *API.txt export-ignore
+*api.html export-ignore
 *KNOWN_ISSUES.txt export-ignore
 UPGRADE.txt export-ignore
 web.config export-ignore
@@ -42,4 +43,19 @@ INSTALL*.txt export-ignore
 *.patch export-ignore
 # tests
 *.test export-ignore
+# contrib (these could be security holes)
+sites/all/libraries/plupload/examples export-ignore
+sites/all/libraries/plupload/docs export-ignore
+sites/all/libraries/jquery.jcarousel/examples export-ignore
+sites/all/libraries/jquery.jcarousel/index.html export-ignore
+sites/all/libraries/jquery.jcarousel/style.css export-ignore
+sites/all/libraries/jquery.jcarousel/skins export-ignore
+sites/all/libraries/jquery.jcarousel/lib/jquery.jcarousel.js export-ignore
+sites/all/libraries/jquery.jcarousel/lib/jquery-1.4.2.min.js export-ignore
+sites/all/libraries/colorbox/colorbox.ai export-ignore
+sites/all/libraries/colorbox/*/*.html export-ignore
+sites/all/libraries/colorbox/content export-ignore
+sites/all/libraries/colorbox/jquery.colorbox.js export-ignore
+sites/all/modules/contrib/ckeditor/images/buttons/index.html export-ignore
+sites/all/modules/contrib/openlayers/tests/js/qunit/index.html export-ignore
 
