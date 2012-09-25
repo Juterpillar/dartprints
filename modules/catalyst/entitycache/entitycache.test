@@ -258,11 +258,11 @@ class EntityCacheNodeAccessRebuildTestCase extends NodeAccessRebuildTestCase {
 /**
  * Copy of NodeAccessRecordsUnitTest.
  */
-class EntityCacheNodeAccessRecordsUnitTest extends NodeAccessRecordsUnitTest {
+class EntityCacheNodeAccessRecordsUnitTest extends NodeAccessRecordsTestCase {
   public static function getInfo() {
     return array(
-      'name' => 'Copy of NodeAccessRecordsUnitTest',
-      'description' => 'Copy of NodeAccessRecordsUnitTest',
+      'name' => 'Copy of NodeAccessRecordsTestCase',
+      'description' => 'Copy of NodeAccessRecordsTestCase',
       'group' => 'Entity cache',
     );
   }
@@ -275,11 +275,11 @@ class EntityCacheNodeAccessRecordsUnitTest extends NodeAccessRecordsUnitTest {
 /**
  * Copy of NodeAccessUnitTest.
  */
-class EntityCacheNodeAccessUnitTest extends NodeAccessUnitTest {
+class EntityCacheNodeAccessUnitTest extends NodeAccessTestCase {
   public static function getInfo() {
     return array(
-      'name' => 'Copy of NodeAccessUnitTest',
-      'description' => 'Copy of NodeAccessUnitTest',
+      'name' => 'Copy of NodeAccessTestCase',
+      'description' => 'Copy of NodeAccessTestCase',
       'group' => 'Entity cache',
     );
   }
@@ -428,11 +428,11 @@ class EntityCacheNodeLoadHooksTestCase extends NodeLoadHooksTestCase {
 /**
  * Copy of NodeLoadMultipleUnitTest.
  */
-class EntityCacheNodeLoadMultipleUnitTest extends NodeLoadMultipleUnitTest {
+class EntityCacheNodeLoadMultipleUnitTest extends NodeLoadMultipleTestCase {
   public static function getInfo() {
     return array(
-      'name' => 'Copy of NodeLoadMultipleUnitTest',
-      'description' => 'Copy of NodeLoadMultipleUnitTest',
+      'name' => 'Copy of NodeLoadMultipleTestCase',
+      'description' => 'Copy of NodeLoadMultipleTestCase',
       'group' => 'Entity cache',
     );
   }
@@ -853,11 +853,11 @@ class EntityCacheTaxonomyLegacyTestCase extends TaxonomyLegacyTestCase {
 /**
  * Copy of TaxonomyLoadMultipleUnitTest.
  */
-class EntityCacheTaxonomyLoadMultipleUnitTest extends TaxonomyLoadMultipleUnitTest {
+class EntityCacheTaxonomyLoadMultipleUnitTest extends TaxonomyLoadMultipleTestCase {
   public static function getInfo() {
     return array(
-      'name' => 'Copy of TaxonomyLoadMultipleUnitTest',
-      'description' => 'Copy of TaxonomyLoadMultipleUnitTest',
+      'name' => 'Copy of TaxonomyLoadMultipleTestCase',
+      'description' => 'Copy of TaxonomyLoadMultipleTestCase',
       'group' => 'Entity cache',
     );
   }
@@ -904,11 +904,11 @@ class EntityCacheTaxonomyTermTestCase extends TaxonomyTermTestCase {
 /**
  * Copy of TaxonomyTermUnitTest.
  */
-class EntityCacheTaxonomyTermUnitTest extends TaxonomyTermUnitTest {
+class EntityCacheTaxonomyTermUnitTest extends TaxonomyTermTestCase {
   public static function getInfo() {
     return array(
-      'name' => 'Copy of TaxonomyTermUnitTest',
-      'description' => 'Copy of TaxonomyTermUnitTest',
+      'name' => 'Copy of TaxonomyTermTestCase',
+      'description' => 'Copy of TaxonomyTermTestCase',
       'group' => 'Entity cache',
     );
   }
@@ -972,11 +972,11 @@ class EntityCacheTaxonomyVocabularyFunctionalTest extends TaxonomyVocabularyFunc
 /**
  * Copy of TaxonomyVocabularyUnitTest.
  */
-class EntityCacheTaxonomyVocabularyUnitTest extends TaxonomyVocabularyUnitTest {
+class EntityCacheTaxonomyVocabularyUnitTest extends TaxonomyVocabularyTestCase {
   public static function getInfo() {
     return array(
-      'name' => 'Copy of TaxonomyVocabularyUnitTest',
-      'description' => 'Copy of TaxonomyVocabularyUnitTest',
+      'name' => 'Copy of TaxonomyVocabularyTestCase',
+      'description' => 'Copy of TaxonomyVocabularyTestCase',
       'group' => 'Entity cache',
     );
   }
