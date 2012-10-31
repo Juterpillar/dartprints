@@ -9,7 +9,7 @@ patches.txt export-ignore
 sites/all/themes/*/sass export-ignore
 sites/all/themes/*/sass-extensions export-ignore
 sites/all/themes/*/images-source export-ignore
-sites/all/themes/*/fonts export-ignore
+sites/all/themes/zen/fonts export-ignore
 sites/all/themes/*/config.rb export-ignore
 sites/all/themes/*/STARTERKIT export-ignore
 # drupal directories
