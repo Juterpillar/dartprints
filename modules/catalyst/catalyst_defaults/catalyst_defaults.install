@@ -1,0 +1,30 @@
+<?php
+/**
+ * @file
+ * Catalyst defaults install file.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function catalyst_defaults_requirements($phase) {
+  $requirements = array();
+
+  // Ensure translations don't break during installation.
+  $t = get_t();
+
+  $requirements['no_cat_profile'] = array(
+    'title' => $t('Cat Profile not installed'),
+    'value' => $t('Catalyst Defaults conflicts with the deprecated Cat Profile module.'),
+    'severity' => module_exists('cat_profile') ? REQUIREMENT_ERROR : REQUIREMENT_OK,
+  );    
+
+  $wr = variable_get('catalyst_defaults_maintenance_wr', FALSE);
+  $requirements['catalyst_defaults_maintenance_wr'] = array(
+    'title' => $t('WRMS Maintanance WR setup'),
+    'value' => $wr ? l('WR#' . $wr, 'https://wrms.catalyst.net.nz/' . $wr) : l($t('not set'), 'admin/config/system/catalyst'),
+    'severity' => ($phase != 'runtime') ? REQUIREMENT_INFO : ($wr ? REQUIREMENT_OK : REQUIREMENT_WARNING),
+  );
+
+  return $requirements;
+}
