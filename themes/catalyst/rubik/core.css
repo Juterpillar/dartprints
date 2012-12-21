@@ -335,6 +335,18 @@ table .item-list,
 
   .page-content .form-item:hover > .description { display:block; }
 
+  .rubik-inline-field-descriptions .page-content .form-item .description {
+    display:block;
+    position:relative;
+    background:none;
+    margin:0;
+    padding:0.25em 0 0.75em;
+    border:none;
+    right:0;
+    width:100%;
+    z-index:0;
+    }
+
 input.form-submit, a.button { display: inline-block;}
 
 input.teaser-button,

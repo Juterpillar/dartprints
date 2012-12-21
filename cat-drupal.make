@@ -9,3 +9,11 @@
 
 core = 7.x
 api = 2
+
+
+; Rubik admin theme
+projects[rubik][type] = theme
+projects[rubik][subdir] = catalyst
+projects[rubik][version] = 4.x-dev
+; Provide theme setting to render form field descriptions inline: http://drupal.org/node/1730844
+projects[rubik][patch][] = "http://drupal.org/files/rubik_inline_field_desc-1730844-10.patch"

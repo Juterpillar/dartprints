@@ -2,9 +2,12 @@
 /*
  * Implements hook_preprocess_html().
  */
-function rubik_preprocess_html() {
+function rubik_preprocess_html(&$vars) {
   if (module_exists('views')) {
     drupal_add_css(drupal_get_path('module', 'views') . '/css/views-admin.seven.css', 'theme');
+  }
+  if (theme_get_setting('rubik_inline_field_descriptions')) {
+    $vars['classes_array'][] = 'rubik-inline-field-descriptions';
   }
 }
 
