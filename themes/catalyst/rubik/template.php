@@ -2,9 +2,12 @@
 /*
  * Implements hook_preprocess_html().
  */
-function rubik_preprocess_html() {
+function rubik_preprocess_html(&$vars) {
   if (module_exists('views')) {
     drupal_add_css(drupal_get_path('module', 'views') . '/css/views-admin.seven.css', 'theme');
+  }
+  if (theme_get_setting('rubik_inline_field_descriptions')) {
+    $vars['classes_array'][] = 'rubik-inline-field-descriptions';
   }
 }
 
@@ -18,10 +21,6 @@ function rubik_css_alter(&$css) {
   }
   if (isset($css['modules/shortcut/shortcut.css'])) {
     $css['modules/shortcut/shortcut.css']['data'] = drupal_get_path('theme', 'rubik') . '/shortcut.css';
-  }
-  // This can be removed once http://drupal.org/node/1221560 is released
-  if (isset($css['sites/all/modules/views/css/views-admin.rubik.css'])) {
-    $css['sites/all/modules/views/css/views-admin.rubik.css']['data'] = drupal_get_path('theme', 'rubik') . '/views-admin.rubik.css';
   }
 }
 
@@ -405,9 +404,9 @@ function rubik_admin_block_content($vars) {
 
   $output = '';
   if (!empty($content)) {
-  
+
     foreach ($content as $k => $item) {
-    
+
       //-- Safety check for invalid clients of the function
       if (empty($content[$k]['localized_options']['attributes']['class'])) {
         $content[$k]['localized_options']['attributes']['class'] = array();
@@ -415,7 +414,7 @@ function rubik_admin_block_content($vars) {
       if (!is_array($content[$k]['localized_options']['attributes']['class'])) {
         $content[$k]['localized_options']['attributes']['class'] = array($content[$k]['localized_options']['attributes']['class']);
       }
-    
+
       $content[$k]['title'] = "<span class='icon'></span>" . filter_xss_admin($item['title']);
       $content[$k]['localized_options']['html'] = TRUE;
       if (!empty($content[$k]['localized_options']['attributes']['class'])) {
@@ -464,7 +463,7 @@ function rubik_admin_drilldown_menu_item_link($link) {
 function rubik_preprocess_textfield(&$vars) {
   if ($vars['element']['#size'] >= 30 && empty($vars['element']['#field_prefix']) && empty($vars['element']['#field_suffix'])) {
     $vars['element']['#size'] = '';
-    if (!isset($vars['element']['#attributes']['class']) 
+    if (!isset($vars['element']['#attributes']['class'])
       || !is_array($vars['element']['#attributes']['class'])) {
        $vars['element']['#attributes']['class'] = array();
     }
