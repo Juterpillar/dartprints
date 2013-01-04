@@ -186,12 +186,20 @@ table tr.region td { background:#f8f8f8; }
 
 /* Hide tabledrag markers */
 table tr.draggable span.tabledrag-changed { display:none; }
- 
+
 /* Stripe administrative tables */
 .page-admin table tr.even, .page-admin table tr.even td {
   background: #f9f9f9;
 }
-               
+
+/* Overrides the striping with core classes for errors and warnings */
+.page-admin table tr.error, .page-admin table tr.error td {
+  background: #FCC;
+  }
+.page-admin table tr.warning, .page-admin table tr.warning td {
+  background: #FFD;
+  }
+
 /**
  * Forms ==============================================================
  */
@@ -562,7 +570,7 @@ body.page-admin div.vertical-tabs .vertical-tabs-panes .vertical-tabs-pane field
 .filter-wrapper {
   font-size:11px;
   margin-top:-10px;
-  border-top:none; 
+  border-top:none;
   }
 
 .filter-wrapper .fieldset-content,
