@@ -7,7 +7,7 @@ include_once dirname(__FILE__) . '/environment.drush.inc';
 /**
  * Default path to Memcache caching plugin.
  */
-define('MEMCACHE_PLUGIN', realpath(dirname(__FILE__) . '/../../memcache'));
+define('MEMCACHE_PLUGIN', drupal_get_path('module', 'memcache'));
 
 /**
  * Determine if the memcache cache plugin is available.
@@ -137,13 +137,20 @@ CODE;
     '             $host = trim($host);',
     '             $settings .= "\$conf[\'memcache_servers\'][\'$host\'] = \'default\';" . PHP_EOL;',
     '           }',
-    '           $memcache_dir = str_replace(WEBROOT, ".", dirname($files[0]));',
+    '           $memcache_dir = ltrim(str_replace(WEBROOT, \'\', dirname($files[0])), \'/\');',
     '           if ($debconf->get("memcache_cache", FALSE)) {',
-    '             $settings .= "\$conf[\'cache_inc\'] = \'{$memcache_dir}/memcache.inc\';" . PHP_EOL;',
+    '             $settings .= "\$conf[\'cache_default_class\'] = \'MemCacheDrupal\';" . PHP_EOL;',
+    '             $settings .= "\$conf[\'cache_default_class\'] = \'MemCacheDrupal\';" . PHP_EOL;',
+    '             $settings .= "\$conf[\'cache_default_class\'] = \'MemCacheDrupal\';" . PHP_EOL;',
+    '             $settings .= "\$conf[\'cache_backends\'][] = \'{$memcache_dir}/memcache.inc\';" . PHP_EOL;',
+    '             $settings .= "\$conf[\'memcache_bins\'][\'cache\'] = \'default\';" . PHP_EOL;',
     '           }',
-    '           if ($debconf->get("memcache_sessions", FALSE)) {',
-    '             $settings .= "\$conf[\'session_inc\'] = \'{$memcache_dir}/memcache-session.inc\';" . PHP_EOL;',
-    '           }',
+    // As at 6/12/2012 memcache session handling is not yet ported to drupal 7.
+    // @ see http://drupal.org/node/1131468
+    // The session_inc conf will break drupal 7.
+    //'           if ($debconf->get("memcache_sessions", FALSE)) {',
+    //'             $settings .= "\$conf[\'session_inc\'] = \'{$memcache_dir}/memcache-session.inc\';" . PHP_EOL;',
+    //'           }',
     '        }',
     '     }',
     );
@@ -171,12 +178,15 @@ function cat_profile_debian_templates() {
   $output .= "Default: true" . PHP_EOL;
   $output .= "Description: Use Memcache for Drupal cache:" . PHP_EOL;
   $output .= " Do you want to use Memcache as the caching mechinism for Drupal?" . PHP_EOL;
-  $output .= PHP_EOL;
-  $output .= "Template: __PACKAGE__/memcache_sessions" . PHP_EOL;
-  $output .= "Type: boolean" . PHP_EOL;
-  $output .= "Default: true" . PHP_EOL;
-  $output .= "Description: Memcache Sessions:" . PHP_EOL;
-  $output .= " Do you want Memcache to handle Drupal sessions?" . PHP_EOL;
+  // As at 6/12/2012 memcache session handling is not yet ported to drupal 7.
+  // @ see http://drupal.org/node/1131468
+  // The session_inc conf will break drupal 7.
+  //$output .= PHP_EOL;
+  //$output .= "Template: __PACKAGE__/memcache_sessions" . PHP_EOL;
+  //$output .= "Type: boolean" . PHP_EOL;
+  //$output .= "Default: true" . PHP_EOL;
+  //$output .= "Description: Memcache Sessions:" . PHP_EOL;
+  //$output .= " Do you want Memcache to handle Drupal sessions?" . PHP_EOL;
   return $output;
 }
 
@@ -193,7 +203,10 @@ function cat_profile_debian_config() {
   $output .= "  db_set __PACKAGE__/memcache_sessions false" . PHP_EOL;
   $output .= "else" . PHP_EOL;
   $output .= "   db_input \$PRIORITY __PACKAGE__/memcache_cache || true" . PHP_EOL;
-  $output .= "   db_input \$PRIORITY __PACKAGE__/memcache_sessions || true" . PHP_EOL;
+  // As at 6/12/2012 memcache session handling is not yet ported to drupal 7.
+  // @ see http://drupal.org/node/1131468
+  // The session_inc conf will break drupal 7.
+  //$output .= "   db_input \$PRIORITY __PACKAGE__/memcache_sessions || true" . PHP_EOL;
   $output .= "fi" . PHP_EOL;
   $output .= "db_go" . PHP_EOL;
   return $output;
