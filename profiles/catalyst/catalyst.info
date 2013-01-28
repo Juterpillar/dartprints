@@ -5,7 +5,6 @@ core = 7.x
 
 ; Drupal core
 dependencies[] = block
-dependencies[] = color
 dependencies[] = comment
 dependencies[] = contextual
 dependencies[] = help
