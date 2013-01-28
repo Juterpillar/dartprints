@@ -1,0 +1,42 @@
+name = Catalyst Core
+description = Install with commonly used features pre-configured.
+version = VERSION
+core = 7.x
+
+; Drupal core
+dependencies[] = block
+dependencies[] = color
+dependencies[] = comment
+dependencies[] = contextual
+dependencies[] = help
+dependencies[] = image
+dependencies[] = list
+dependencies[] = menu
+dependencies[] = number
+dependencies[] = options
+dependencies[] = path
+dependencies[] = taxonomy
+dependencies[] = dblog
+dependencies[] = search
+dependencies[] = shortcut
+dependencies[] = toolbar
+dependencies[] = field_ui
+dependencies[] = file
+dependencies[] = rdf
+
+; Catalyst Core
+dependencies[] = environment
+dependencies[] = archimedes
+dependencies[] = catalyst_defaults
+
+; Contrib
+dependencies[] = ctools
+dependencies[] = libraries
+dependencies[] = views
+dependencies[] = token
+dependencies[] = pathauto
+dependencies[] = entity
+dependencies[] = features
+dependencies[] = entityreference
+dependencies[] = field_group
+
