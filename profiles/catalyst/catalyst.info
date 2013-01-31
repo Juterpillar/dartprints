@@ -16,7 +16,6 @@ dependencies[] = options
 dependencies[] = path
 dependencies[] = taxonomy
 dependencies[] = dblog
-dependencies[] = search
 dependencies[] = shortcut
 dependencies[] = toolbar
 dependencies[] = field_ui
@@ -24,18 +23,29 @@ dependencies[] = file
 dependencies[] = rdf
 
 ; Catalyst Core
-dependencies[] = environment
 dependencies[] = archimedes
 dependencies[] = catalyst_defaults
 
 ; Contrib
+dependencies[] = ckeditor
 dependencies[] = ctools
-dependencies[] = libraries
-dependencies[] = views
-dependencies[] = token
-dependencies[] = pathauto
+dependencies[] = date
+dependencies[] = email
 dependencies[] = entity
-dependencies[] = features
+dependencies[] = entitycache
 dependencies[] = entityreference
+dependencies[] = environment
+dependencies[] = features
 dependencies[] = field_group
-
+dependencies[] = flag
+dependencies[] = globalredirect
+dependencies[] = libraries
+dependencies[] = link
+dependencies[] = pathauto
+dependencies[] = redirect
+dependencies[] = securepages
+dependencies[] = strongarm
+dependencies[] = token
+dependencies[] = token_tweaks
+dependencies[] = transliteration
+dependencies[] = views
