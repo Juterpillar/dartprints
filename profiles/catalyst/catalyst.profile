@@ -18,11 +18,29 @@ if (!isset($_GET['profile']) && $_SERVER['SCRIPT_NAME'] == (base_path() . 'insta
 function catalyst_form_install_configure_form_alter(&$form, $form_state) {
   // Pre-populate the site name with the server name.
   $form['site_information']['site_name']['#default_value'] = $_SERVER['SERVER_NAME'];
+  $form['site_information']['site_mail']['#default_value'] = 'no-reply@' . $_SERVER['SERVER_NAME'];
+
+  $form['admin_account']['account']['name']['#default_value'] = 'admin';
+  $form['admin_account']['account']['name']['#disabled'] = TRUE;
+
+  $form['server_settings']['site_default_country']['#default_value'] = 'NZ';
+  $form['server_settings']['#collapsible'] = TRUE;
+  $form['server_settings']['#collapsed'] = TRUE;
+
+  $form['update_notifications']['update_status_module']['#default_value'] = array();
+  $form['update_notifications']['#collapsible'] = TRUE;
+  $form['update_notifications']['#collapsed'] = TRUE;
+
+  if (module_exists('archimedes')) {
+    $form['update_notifications']['warning']['#markup'] = t('<strong>It is not recommended to use update notifications as Archimedes can do this for you</strong>');
+  }
+
+  // If git is installed, use the developers email address.
+  if ($git_bin = trim(`which git`)) {
+    if ($mail = trim(`$git_bin config user.email`)) {
+      $form['admin_account']['account']['mail']['#default_value'] = $mail;
+    }
+  }
+
 }
 
-
-/**
- * Implements hook_form_alter().
- */
-function catalyst_form_install_select_profile_form_alter() {
-}

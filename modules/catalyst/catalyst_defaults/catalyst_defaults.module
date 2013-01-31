@@ -59,6 +59,53 @@ function catalyst_defaults_menu_alter(&$registry) {
 }
 
 /**
+ * Implements hook_form_install_configure_form_alter().
+ */
+function catalyst_defaults_form_install_configure_form_alter(&$form, $form_state) {
+  $form['site_information']['catalyst_defaults_maintenance_wr'] = array(
+    '#title' => t('WRMS maintenance work request'),
+    '#description' => t('This should be the number of the WR that will be used to administer Drupal maintenance by Catalyst to this site. You must have %perm to be able to configure this settings.', array(
+      '%perm' => t('Administer software updates'),
+    )),
+    '#default_value' => variable_get('catalyst_defaults_maintenance_wr', ''),
+    '#element_validate' => array('element_validate_number'),
+    '#size' => 8,
+    '#field_prefix' => t('WR#'),
+    '#type' => 'textfield',
+  );
+
+  // Present the environment module form on the installation form
+  // so that the environment is set right at the beginning.
+  if (module_exists('environment')) {
+    module_load_include('inc', 'environment', 'environment.admin');
+    $env_form = environment_admin_settings();
+
+    unset($env_form['environment']['#type']);
+    unset($env_form['environment']['#title']);
+
+    $env_form['environment']['default']['#required'] = TRUE;
+
+    $form['site_information']['environment'] = $env_form['environment'];
+    $form['environment_require_override']['#type'] = 'hidden';
+    $form['environment_require_override']['#value'] = FALSE;
+    $form['#submit'][] = $env_form['#submit'][0];
+  }
+
+  $form['#submit'][] = 'catalyst_defaults_install_configure_form_submit';
+}
+
+/**
+ * Form submission callback: install_configure_form
+ */
+function catalyst_defaults_install_configure_form_submit($form, $form_state) {
+  variable_set('catalyst_defaults_maintenance_wr', $form_state['values']['catalyst_defaults_maintenance_wr']);
+
+  if (module_exists('environment')) {
+    environment_switch($form_state['values']['environment']['default']);
+  }
+}
+
+/**
  * Implements hook_environment().
  */
 function catalyst_defaults_environment() {
