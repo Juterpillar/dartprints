@@ -19,32 +19,36 @@ function catalyst_defaults_requirements($phase) {
     'severity' => module_exists('cat_profile') ? REQUIREMENT_ERROR : REQUIREMENT_OK,
   );    
 
-  $wr = variable_get('catalyst_defaults_maintenance_wr', FALSE);
-  $requirements['catalyst_defaults_maintenance_wr'] = array(
-    'title' => $t('WRMS Maintanance WR setup'),
-    'value' => $wr ? l('WR#' . $wr, 'https://wrms.catalyst.net.nz/' . $wr) : l($t('not set'), 'admin/config/system/catalyst'),
-    'severity' => ($phase != 'runtime') ? REQUIREMENT_INFO : ($wr ? REQUIREMENT_OK : REQUIREMENT_WARNING),
-  );
-
-  $environment = environment_load(environment_current());
-  // We deploy Drupal code bases to servers without cron.php, install.php or
-  // update.php. So if the environment is set as Production and any one of
-  // these files exists, its possible that this isn't actually a production
-  // environment. One of two things should happen in this case; If the
-  // environment is actually a development environment then the developer
-  // should switch the environment to the correct environment. If this is
-  // a production environment then they should remove the files.
-  $black_files = array_filter(array('cron.php', 'install.php', 'update.php'), 'file_exists');
-  if (count($black_files) && environment_current() != 'development') {
-    $requirements['bad_files'] = array(
-      'title' => $t('Environment incorrectly set'),
-      'value' => $environment['label'],
-      'severity' => REQUIREMENT_ERROR,
-      'description' => $t('This environment is set to @environment but has been deployed with @bad_files which are prohibited in Catalyst deployed Drupal sites. If the environment is correctly set, please remove the prohibited files. Otherwise please set the environment correctly to development.', array(
-        '@environment' => $environment['label'],
-        '@bad_files' => implode(', ', $black_files),
-      )),
+  if ($phase != 'install') {
+    $wr = variable_get('catalyst_defaults_maintenance_wr', FALSE);
+    $requirements['catalyst_defaults_maintenance_wr'] = array(
+      'title' => $t('WRMS Maintanance WR setup'),
+      'value' => $wr ? l('WR#' . $wr, 'https://wrms.catalyst.net.nz/' . $wr) : l($t('not set'), 'admin/config/system/catalyst'),
+      'severity' => ($phase != 'runtime') ? REQUIREMENT_INFO : ($wr ? REQUIREMENT_OK : REQUIREMENT_WARNING),
     );
+  }
+
+  if (function_exists('environment_load')) {
+    $environment = environment_load(environment_current());
+    // We deploy Drupal code bases to servers without cron.php, install.php or
+    // update.php. So if the environment is set as Production and any one of
+    // these files exists, its possible that this isn't actually a production
+    // environment. One of two things should happen in this case; If the
+    // environment is actually a development environment then the developer
+    // should switch the environment to the correct environment. If this is
+    // a production environment then they should remove the files.
+    $black_files = array_filter(array('cron.php', 'install.php', 'update.php'), 'file_exists');
+    if (count($black_files) && environment_current() != 'development') {
+      $requirements['bad_files'] = array(
+        'title' => $t('Environment incorrectly set'),
+        'value' => $environment['label'],
+        'severity' => REQUIREMENT_ERROR,
+        'description' => $t('This environment is set to @environment but has been deployed with @bad_files which are prohibited in Catalyst deployed Drupal sites. If the environment is correctly set, please remove the prohibited files. Otherwise please set the environment correctly to development.', array(
+          '@environment' => $environment['label'],
+          '@bad_files' => implode(', ', $black_files),
+        )),
+      );
+    }
   }
 
   return $requirements;
