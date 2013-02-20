@@ -1,0 +1,51 @@
+name = Catalyst Core
+description = Install with commonly used features pre-configured.
+version = VERSION
+core = 7.x
+
+; Drupal core
+dependencies[] = block
+dependencies[] = comment
+dependencies[] = contextual
+dependencies[] = help
+dependencies[] = image
+dependencies[] = list
+dependencies[] = menu
+dependencies[] = number
+dependencies[] = options
+dependencies[] = path
+dependencies[] = taxonomy
+dependencies[] = dblog
+dependencies[] = shortcut
+dependencies[] = toolbar
+dependencies[] = field_ui
+dependencies[] = file
+dependencies[] = rdf
+
+; Catalyst Core
+dependencies[] = archimedes
+dependencies[] = catalyst_defaults
+
+; Contrib
+dependencies[] = ckeditor
+dependencies[] = ctools
+dependencies[] = date
+dependencies[] = email
+dependencies[] = entity
+dependencies[] = entitycache
+dependencies[] = entityreference
+dependencies[] = environment
+dependencies[] = features
+dependencies[] = field_group
+dependencies[] = flag
+dependencies[] = globalredirect
+dependencies[] = libraries
+dependencies[] = link
+dependencies[] = pathauto
+dependencies[] = redirect
+dependencies[] = securepages
+dependencies[] = strongarm
+dependencies[] = token
+dependencies[] = token_tweaks
+dependencies[] = transliteration
+dependencies[] = views
