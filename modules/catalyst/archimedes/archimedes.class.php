@@ -206,7 +206,7 @@ class Archimedes {
     $message .= $attachment . "\r\n";
     $message .= '--' . $boundary . "\r\n";
 
-    return mail($email, 'XML Update from' . ' ' . (string) $this->getField('title'), $message, $headers);
+    return mail($email, 'XML Update from' . ' ' . $site_name, $message, $headers);
   }
 
   /**
@@ -280,7 +280,7 @@ Class ArchimedesField {
       $value->compile($field);
       if ($this->facet) {
         $value->nodeValue = '';
-        $value->appendChild(new DOMElement('facet', (string) $value));
+        $value->appendChild(new DOMElement('facet', htmlspecialchars((string) $value)));
       }
     }
     return $field;
