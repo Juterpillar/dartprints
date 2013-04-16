@@ -47,7 +47,7 @@ function archimedes_admin() {
 
   $form['archimedes_cron_update'] = array(
     '#type' => 'textfield',
-    '#title' => t('Cron upate every x days'),
+    '#title' => t('Cron update every x days'),
     '#size' => 5,
     '#default_value' => variable_get('archimedes_cron_update', 1),
     '#description' => t('Set Archimedes minimum cron update period.'),
