@@ -21,7 +21,7 @@ class Archimedes {
 
     $dom = new DOMDocument('1.0', 'UTF-8');
     $dom->formatOutput = TRUE;
-    $node = new DOMElement('node',null,'monitor:node');
+    $node = new DOMElement('node', NULL, 'monitor:node');
     $dom->appendChild($node);
     $node->setAttribute('type',$this->type);
     $node->setAttribute('id',$this->id);
@@ -307,7 +307,7 @@ class ANSValue extends DOMElement {
 
   // Namespace attributes.
   protected $ns_attr = array();
-  protected $ns = null;
+  protected $ns = NULL;
 
   // Normal attributes.
   protected $attr = array();
@@ -538,13 +538,13 @@ function archimedes_directory_hash($dir, $ignore) {
   // introduced or removed.
   $symlinks = array();
   if (!is_dir($dir)) {
-    return false;
+    return FALSE;
   }
 
   $filemd5s = array();
   $d = dir($dir);
 
-  while (($entry = $d->read()) !== false)  {
+  while (($entry = $d->read()) !== FALSE)  {
     if (in_array($entry, array('.', '..'))) {
       continue;
     }
