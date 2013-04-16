@@ -338,7 +338,7 @@ Class ANSValue extends DOMElement {
     return $this->attr[$name];
   }
 
-  public function getAttributeNS($name) {
+  public function getAttributeNS($name, $localname = NULL) {
     return $this->ns_attr[$name];
   }
 
