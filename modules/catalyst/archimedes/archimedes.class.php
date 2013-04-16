@@ -234,7 +234,7 @@ class Archimedes {
 
 }
 
-Class ArchimedesField {
+class ArchimedesField {
 
   public $fieldID;
   protected $facet = FALSE;
@@ -302,7 +302,7 @@ Class ArchimedesField {
   }
 }
 
-Class ANSValue extends DOMElement {
+class ANSValue extends DOMElement {
 
 
   // Namespace attributes.
@@ -361,7 +361,7 @@ Class ANSValue extends DOMElement {
   }
 }
 
-Class Archimedes_nodereference extends ANSValue {
+class Archimedes_nodereference extends ANSValue {
 
   public function __construct($value) {
     if (!isset($this->ns))
@@ -382,7 +382,7 @@ Class Archimedes_nodereference extends ANSValue {
   }
 }
 
-Class Archimedes_userreference extends ANSValue {
+class Archimedes_userreference extends ANSValue {
   public function __construct($value) {
     $this->ns = 'monitor-plugin:user';
     parent::__construct($value);
@@ -400,7 +400,7 @@ Class Archimedes_userreference extends ANSValue {
   }
 }
 
-Class Archimedes_drupalmod extends Archimedes_nodereference {
+class Archimedes_drupalmod extends Archimedes_nodereference {
 
   public function __construct($value) {
     $this->ns = 'monitor-plugin:drupal-module';
@@ -411,7 +411,7 @@ Class Archimedes_drupalmod extends Archimedes_nodereference {
   }
 }
 
-Class Archimedes_moodlemod extends Archimedes_nodereference {
+class Archimedes_moodlemod extends Archimedes_nodereference {
 
   public function __construct($value) {
     $this->ns = 'monitor-plugin:moodle-module';
@@ -422,7 +422,7 @@ Class Archimedes_moodlemod extends Archimedes_nodereference {
   }
 }
 
-Class Archimedes_gitrepo extends ANSValue {
+class Archimedes_gitrepo extends ANSValue {
   public function __construct($value) {
     $this->ns = 'monitor-plugin:git';
     parent::__construct($value);
@@ -436,7 +436,7 @@ Class Archimedes_gitrepo extends ANSValue {
   }
 }
 
-Class Archimedes_dataset extends ANSValue {
+class Archimedes_dataset extends ANSValue {
   public function __construct($value) {
     $this->ns = 'monitor-plugin:dataset';
     parent::__construct($value);
