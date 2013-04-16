@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Archimedes client classes to deal with information about the given server.
+ */
 
 /**
  * Class to generate a status report of an Web Application.
@@ -23,12 +27,12 @@ class Archimedes {
     $dom->formatOutput = TRUE;
     $node = new DOMElement('node', NULL, 'monitor:node');
     $dom->appendChild($node);
-    $node->setAttribute('type',$this->type);
-    $node->setAttribute('id',$this->id);
-    $node->setAttribute('datetime',date('c'));
-    $node->setAttribute('author','mailto:' . $this->author);
+    $node->setAttribute('type', $this->type);
+    $node->setAttribute('id', $this->id);
+    $node->setAttribute('datetime', date('c'));
+    $node->setAttribute('author', 'mailto:' . $this->author);
 
-    foreach($this->fields as $field) {
+    foreach ($this->fields as $field) {
       $field->compile($node);
     }
     return $dom->saveXML();
@@ -56,7 +60,7 @@ class Archimedes {
   public function encrypt($key) {
     $data = $this->toXML();
     $pubkey = openssl_pkey_get_public($key);
-    openssl_seal($data,$sealed,$ekeys,array($pubkey));
+    openssl_seal($data, $sealed, $ekeys, array($pubkey));
     openssl_free_key($pubkey);
     $this->encrypted = $sealed;
     $this->ekey = $ekeys[0];
@@ -75,7 +79,7 @@ class Archimedes {
 
   public function __toString() {
     return base64_encode($this->getEncrypted());
-  } 
+  }
 
   /**
    * Post the data directly to the Archimedes Server.
@@ -89,23 +93,25 @@ class Archimedes {
     }
 
     if (!isset($uri['scheme'])) {
-      throw new Exception('Missing URL schema for: ['. $uri . ']' );
+      throw new Exception('Missing URL schema for: [' . $uri . ']');
     }
 
     switch ($uri['scheme']) {
       case 'http':
         $port = isset($uri['port']) ? $uri['port'] : 80;
-        $host = $uri['host'] . ($port != 80 ? ':'. $port : '');
+        $host = $uri['host'] . ($port != 80 ? ':' . $port : '');
         $fp = @fsockopen($uri['host'], $port, $errno, $errstr, 15);
         break;
+
       case 'https':
         // Note: Only works for PHP 4.3 compiled with OpenSSL.
         $port = isset($uri['port']) ? $uri['port'] : 443;
-        $host = $uri['host'] . ($port != 443 ? ':'. $port : '');
-        $fp = @fsockopen('ssl://'. $uri['host'], $port, $errno, $errstr, 20);
+        $host = $uri['host'] . ($port != 443 ? ':' . $port : '');
+        $fp = @fsockopen('ssl://' . $uri['host'], $port, $errno, $errstr, 20);
         break;
+
       default:
-        throw new Exception('Invalid schema '. $uri['scheme'] . '.');
+        throw new Exception('Invalid schema ' . $uri['scheme'] . '.');
     }
 
     // Make sure the socket opened properly.
@@ -116,7 +122,7 @@ class Archimedes {
     // Construct the path to act on.
     $path = isset($uri['path']) ? $uri['path'] : '/';
     if (isset($uri['query'])) {
-      $path .= '?'. $uri['query'];
+      $path .= '?' . $uri['query'];
     }
 
     $content['data'] = (string) $this;
@@ -132,14 +138,14 @@ class Archimedes {
       'User-Agent' => 'User-Agent: (Archimedes Client)',
     );
 
-    $defaults['Content-Length'] = 'Content-Length: '. strlen($content);
+    $defaults['Content-Length'] = 'Content-Length: ' . strlen($content);
 
-    // If the server url has a user then attempt to use basic authentication
+    // If the server url has a user then attempt to use basic authentication.
     if (isset($uri['user'])) {
-      $defaults['Authorization'] = 'Authorization: Basic '. base64_encode($uri['user'] . (!empty($uri['pass']) ? ":". $uri['pass'] : ''));
+      $defaults['Authorization'] = 'Authorization: Basic ' . base64_encode($uri['user'] . (!empty($uri['pass']) ? ":" . $uri['pass'] : ''));
     }
 
-    $request = 'POST '. $path ." HTTP/1.0\r\n";
+    $request = 'POST ' . $path . " HTTP/1.0\r\n";
     $request .= implode("\r\n", $defaults);
     $request .= "\r\n\r\n";
     $request .= $content;
@@ -217,14 +223,14 @@ class Archimedes {
     // Strings will be type casted to arrays.
     $values = (array) $values;
     $field = new ArchimedesField($fieldID);
-    $this->addField($fieldID,$field);
+    $this->addField($fieldID, $field);
     foreach ($values as $value) {
       $field->addValue($value);
     }
     return $field;
   }
 
-  protected function addField($fieldID,$field) {
+  protected function addField($fieldID, $field) {
     $this->fields[$fieldID] = $field;
   }
 
@@ -275,8 +281,8 @@ class ArchimedesField {
   function compile($node) {
     $field = new DOMElement('field');
     $node->appendChild($field);
-    $field->setAttribute('id',$this->fieldID);
-    foreach($this->values as $value) {
+    $field->setAttribute('id', $this->fieldID);
+    foreach ($this->values as $value) {
       $value->compile($field);
       if ($this->facet) {
         $value->nodeValue = '';
@@ -288,14 +294,14 @@ class ArchimedesField {
 
   public function __toString() {
     $list = array();
-    foreach($this->values as $value) {
+    foreach ($this->values as $value) {
       $list[] = (string) $value;
     }
     return implode(', ',$list);
   }
   public function toArray() {
     $list = array();
-    foreach($this->values as $value) {
+    foreach ($this->values as $value) {
       $list[] = $value->toArray();
     }
     return $list;
@@ -517,7 +523,7 @@ class ArchimedesRemoteRequest {
     );
 
     $pubkey = openssl_pkey_get_public($this->key);
-    openssl_seal(serialize($query),$sealed,$ekeys,array($pubkey));
+    openssl_seal(serialize($query), $sealed, $ekeys, array($pubkey));
     openssl_free_key($pubkey);
 
     $url = 'http://' . $_GET['h'] . '/archimedes-server/verify-user?ekey=' . rawurlencode($ekeys[0]) . '&data=' . rawurlencode($sealed);
@@ -544,7 +550,7 @@ function archimedes_directory_hash($dir, $ignore) {
   $filemd5s = array();
   $d = dir($dir);
 
-  while (($entry = $d->read()) !== FALSE)  {
+  while (($entry = $d->read()) !== FALSE) {
     if (in_array($entry, array('.', '..'))) {
       continue;
     }
@@ -562,8 +568,8 @@ function archimedes_directory_hash($dir, $ignore) {
       continue;
     }
     $ignore_entry = FALSE;
-    foreach($ignore as $pattern)  {
-      if(preg_match($pattern, $path)) {
+    foreach ($ignore as $pattern) {
+      if (preg_match($pattern, $path)) {
         $ignore_entry = TRUE;
         break;
       }
@@ -571,7 +577,7 @@ function archimedes_directory_hash($dir, $ignore) {
     if ($ignore_entry) {
       continue;
     }
-    if (is_dir($path))  {
+    if (is_dir($path)) {
       $filemd5s[] = archimedes_directory_hash($path, $ignore);
     }
     elseif (is_file($path)) {
