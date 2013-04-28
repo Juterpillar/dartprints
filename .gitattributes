@@ -55,7 +55,6 @@ sites/all/libraries/jquery.jcarousel/lib/jquery-1.4.2.min.js export-ignore
 sites/all/libraries/colorbox/colorbox.ai export-ignore
 sites/all/libraries/colorbox/*/*.html export-ignore
 sites/all/libraries/colorbox/content export-ignore
-sites/all/libraries/colorbox/jquery.colorbox.js export-ignore
 sites/all/modules/contrib/ckeditor/images/buttons/index.html export-ignore
 sites/all/modules/contrib/openlayers/tests/js/qunit/index.html export-ignore
 
