@@ -200,7 +200,7 @@ function cat_profile_debian_config() {
   $output .= "RET=\${RET// /}" . PHP_EOL;
   $output .= 'if [ "$RET" == "" ]; then' . PHP_EOL;
   $output .= "  db_set __PACKAGE__/memcache_cache false" . PHP_EOL;
-  $output .= "  db_set __PACKAGE__/memcache_sessions false" . PHP_EOL;
+  //$output .= "  db_set __PACKAGE__/memcache_sessions false" . PHP_EOL;
   $output .= "else" . PHP_EOL;
   $output .= "   db_input \$PRIORITY __PACKAGE__/memcache_cache || true" . PHP_EOL;
   // As at 6/12/2012 memcache session handling is not yet ported to drupal 7.
