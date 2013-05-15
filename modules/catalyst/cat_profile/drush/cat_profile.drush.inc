@@ -7,7 +7,7 @@ include_once dirname(__FILE__) . '/environment.drush.inc';
 /**
  * Default path to Memcache caching plugin.
  */
-define('MEMCACHE_PLUGIN', drupal_get_path('module', 'memcache'));
+define('MEMCACHE_PLUGIN', realpath(drupal_get_path('module', 'memcache')));
 
 /**
  * Determine if the memcache cache plugin is available.
