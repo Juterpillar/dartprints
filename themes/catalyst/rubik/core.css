@@ -860,6 +860,16 @@ body.tao #admin-toolbar a.menu-hover span.menu-description span.icon {
 
 .vertical-tabs-list .summary { font-size:11px; }
 
+.vertical-tabs .vertical-tabs-panes .vertical-tabs-pane .fieldset legend {
+  display: block;
+}
+
+.vertical-tabs .vertical-tabs-panes .vertical-tabs-pane fieldset.collapsible {
+  border: 1px solid #CCCCCC;
+  margin: 1em 0;
+  position: relative;
+}
+
 /**
  * Action links =======================================================
  */

@@ -1,4 +1,5 @@
 ; See PATCHES.txt
+; See distribution/core.make for info on removing this file.
 ;
 ; To update/recreate this module, first run the following command:
 ;   drush make --no-core build.make
