@@ -264,9 +264,10 @@ function rubik_preprocess_help_page(&$vars) {
 
   // Truly hackish way to navigate help pages.
   $module_info = system_rebuild_module_data();
+  $empty_arg = drupal_help_arg();
   $modules = array();
   foreach (module_implements('help', TRUE) as $module) {
-    if (module_invoke($module, 'help', "admin/help#$module", NULL)) {
+    if (module_invoke($module, 'help', "admin/help#$module", $empty_arg)) {
       $modules[$module] = $module_info[$module]->info['name'];
     }
   }

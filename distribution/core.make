@@ -58,8 +58,6 @@ projects[views_bulk_operations][subdir] = "contrib"
 ;projects[rubik][destination] = "../../themes/catalyst"
 ;projects[rubik][version] = 4.x-dev
 ;; Support Error classes on table rows https://drupal.org/node/1879560
-;projects[rubik][patch][] = "https://drupal.org/files/rubik-table-error-striping.patch"
+;projects[rubik][patch][] = "https://drupal.org/files/rubik-table-error-striping-2.patch"
 ;; Add an option to display form field descriptions inline (rather than using pop-ups) https://drupal.org/node/1730844
 ;projects[rubik][patch][] = "http://drupal.org/files/rubik_inline_field_desc-1730844-10.patch"
-;; Fix fieldsets inside vertical tabs https://drupal.org/node/1307826
-;projects[rubik][patch][] = "https://drupal.org/files/rubik-fieldset-in-fieldset-display-1307826-5.patch"
