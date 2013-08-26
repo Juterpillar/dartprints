@@ -227,7 +227,7 @@ function catalyst_defaults_archimedes_alter(&$owl) {
       $field_values = array();
       foreach (explode(PHP_EOL, $remotes) as $remote_data) {
         $remote = array_filter(preg_split('/\t|\s/', $remote_data));
-        $field_values[] = archimedes_value($remote[1], 'gitrepo')->setRemoteName($remote[0]); 
+        $field_values[] = archimedes_value($remote[1], 'gitrepo')->setRemoteName($remote[0]);
       }
       $field = $owl->createField('field_git_repo', $field_values)->invokeFacet();
     }
@@ -250,7 +250,7 @@ function catalyst_defaults_archimedes_alter(&$owl) {
     $field = $owl->createField('field_tag', $version)
                  ->invokeFacet();
   }
-        
+
   // Search and add Catalyst users to the report as this will allow us
   // to link Catalyst users with sites for the purpose of maintenance.
   $addresses = db_select('users', 'u')
@@ -262,6 +262,7 @@ function catalyst_defaults_archimedes_alter(&$owl) {
     ->fetchCol();
 
   if (!empty($addresses)) {
+    $field = $owl->createField('field_users');
     // Remove the '+' out of the email address. This is often used to create
     // aliases for testers and developers. After that, we may have duplicate
     // email address so we wrap this in array_unique to prevent it.
