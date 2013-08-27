@@ -198,6 +198,77 @@ function catalyst_defaults_environment_switch($target_env, $current_env, $workfl
   if (isset($environment['conf']->preprocess_js)) {
     variable_set('preprocess_js', $environment['conf']->preprocess_js);
   }
+
+  // Enable and disable environment-specific modules.
+  _catalyst_defaults_environment_switch_modules($target_env, $current_env);
+}
+
+/**
+ * Enable and disable environment-specific modules as appropriate when
+ * catalyst_defaults_environment_switch() is called.
+ *
+ * A module which is only wanted in SOME environments should be listed
+ * against each of those environments. This can be configured in the
+ * settings files. e.g.:
+ *
+ * $conf['catalyst_environment_modules'] = array(
+ *   'development' => array(
+ *     'devel', 'update', 'coder', 'coder_review', 'simpletest',
+ *   ),
+ *   'staging' => array(
+ *     'devel',
+ *   ),
+ *   // 'uat'
+ *   // 'dr'
+ *   // 'ci'
+ *   // 'preproduction'
+ *   // 'production'
+ * );
+ *
+ * Any module appearing in this variable will be disabled when switching to
+ * an environment which does not list it. All modules listed for the target
+ * environment will be enabled.
+ */
+function _catalyst_defaults_environment_switch_modules($target_env, $current_env) {
+  $modules = variable_get('catalyst_environment_modules', array());
+  if (!$modules) {
+    return;
+  }
+  $modules += array($current_env => array(), $target_env => array());
+  $all_envs = array_unique(array_reduce($modules, 'array_merge', array()));
+
+  // Disable any currently-enabled modules which are listed for at least one
+  // of the environments, but NOT for the target environment.
+  $disable = array_intersect(
+    module_list(),
+    array_diff($all_envs, $modules[$target_env])
+  );
+
+  // Enable all modules for the target environment which are not currently
+  // enabled.
+  $enable = array_diff($modules[$target_env], module_list());
+
+  if ($disable) {
+    $args = array('@target' => $target_env, '@list' => implode(', ', $disable));
+    drupal_set_message(t('Disabling non-@target modules: @list', $args));
+    module_disable($disable);
+
+    if ($enabled = array_intersect($disable, module_list())) {
+      $args = array('@list' => implode(', ', $enabled));
+      drupal_set_message(t('Failed to disable modules: @list', $args), 'warning');
+    }
+  }
+
+  if ($enable) {
+    $args = array('@target' => $target_env, '@list' => implode(', ', $enable));
+    drupal_set_message(t('Enabling @target modules: @list', $args));
+    module_enable($enable);
+
+    if ($disabled = array_diff($enable, module_list())) {
+      $args = array('@list' => implode(', ', $disabled));
+      drupal_set_message(t('Failed to enable modules: @list', $args), 'warning');
+    }
+  }
 }
 
 /**
