@@ -5,6 +5,10 @@
 # drush files
 build.make export-ignore
 patches.txt export-ignore
+# files that catalyst_defaults_requirements() will complain about
+cron.php export-ignore
+install.php export-ignore
+update.php export-ignore
 # zen 5.x files
 sites/all/themes/*/sass export-ignore
 sites/all/themes/*/sass-extensions export-ignore
