@@ -19,7 +19,7 @@ api = 2
 ; Entity cache
 projects[entitycache][type] = module
 projects[entitycache][subdir] = contrib
-projects[entitycache][version] = 1.x-dev
+projects[entitycache][version] = 1
 ; PDOException:Invalid text representation when attempting to load an entity with a string ID
 ; http://drupal.org/node/1851398
 projects[entitycache][patch][] = "http://drupal.org/files/entitycache-numeric-ids.patch"
