@@ -119,7 +119,7 @@ function archimedes_build_report() {
     $owl->createField('body', variable_get('site_mission', 'No description has been set.'));
   }
 
-  // If Drush (or some other CLI passed method) is used to 
+  // If Drush (or some other CLI passed method) is used to
   // run cron. You'll need to ensure a correct servername is
   // passed to PHP. With drush, use -l http://mysite.com.
   $owl->createField('field_servername', url('', array('absolute' => 1)));
@@ -226,12 +226,13 @@ function archimedes_build_report() {
   $owl->createField('field_drupal_theme', $themes)
       ->invokeFacet();
 
-  $environment = array_shift(environment_current(NULL,NULL,TRUE));
+  $cur_env = environment_current(NULL,NULL,TRUE);
+  $environment = array_shift($cur_env);
 
   $owl->createField('field_site_env', $environment['label']);
 
   $ignore = array('#(\w*/)*sites/\w*/files#', '#.*\.(git|svn|bzr|cvs)/.*#');
-  
+
   // The point of the directory hash is to record the state of the deployed code base.
   // If the code base changes, then the site could have been redeployed or hacked! However,
   // in development scenarios, the code changes very frequently so we don't care to change
@@ -248,7 +249,7 @@ function archimedes_build_report() {
 
   // Allow other modules to add data via hook_archimedes.
   drupal_alter('archimedes', $owl);
-  
+
   return $owl;
 } // archimedes_collect()
 
