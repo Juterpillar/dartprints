@@ -5,19 +5,24 @@
  * Reroute Email module
  */
 
+define('REROUTE_EMAIL_ADDRESS', 'reroute_email_address');
 define('REROUTE_EMAIL_TO', 'reroute_email_to');
-define('REROUTE_EMAIL_WHITELIST', 'reroute_email_address'); // historical reasons
+
+// This constant name does not match the variable name for historical reasons.
+define('REROUTE_EMAIL_WHITELIST', 'reroute_email_address');
+
 define('REROUTE_EMAIL_DOMAIN_WHITELIST', 'reroute_email_domain_whitelist');
 define('REROUTE_EMAIL_ENABLE_MESSAGE', 'reroute_email_enable_message');
 define('REROUTE_EMAIL_ENABLE', 'reroute_email_enable');
-define('REROUTE_EMAIL_DEFAULT_ADDRESS', ini_get('sendmail_from'));
+
+define('REROUTE_EMAIL_DEFAULT_ADDRESS', variable_get('site_mail', ini_get('sendmail_from')));
 
 /**
  * Implements of hook_permission().
  */
 function reroute_email_permission() {
   return array(
-    'administer reroute email' =>  array(
+    'administer reroute email' => array(
       'title' => t('Administer Reroute Email'),
       'description' => t('Administer the Reroute Email module.'),
     ),
@@ -31,25 +36,28 @@ function reroute_email_menu() {
   $items = array();
 
   $items['admin/config/development/reroute_email'] = array(
-    'title'              => 'Reroute Email',
-    'description'        => 'Reroute emails to a test address.',
-    'page callback'      => 'drupal_get_form',
-    'page arguments'     => array('reroute_email_settings'),
-    'access arguments'   => array('administer reroute email'),
+    'title' => 'Reroute Email',
+    'description' => 'Reroute emails to a test address.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('reroute_email_settings'),
+    'access arguments' => array('administer reroute email'),
+    'file' => 'reroute_email.admin.inc',
   );
 
   $items['admin/config/development/reroute_email/settings'] = array(
-    'type'               => MENU_DEFAULT_LOCAL_TASK,
-    'title'              => 'Settings',
+    'title' => 'Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
   );
 
   $items['admin/config/development/reroute_email/test'] = array(
-    'type'               => MENU_LOCAL_TASK,
-    'title'              => 'Test',
-    'description'        => 'Form for sending test email.',
-    'page callback'      => 'drupal_get_form',
-    'page arguments'     => array('reroute_email_test'),
-    'access arguments'   => array('administer reroute email'),
+    'title' => 'Test email form',
+    'type' => MENU_LOCAL_TASK,
+    'description' => 'Form for sending test email.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('reroute_email_test_email_form'),
+    'access arguments' => array('administer reroute email'),
+    'file' => 'reroute_email.admin.inc',
   );
 
   return $items;
@@ -78,98 +86,9 @@ function reroute_email_destination() {
 }
 
 /**
- * Settings form.
- */
-function reroute_email_settings() {
-  $form[REROUTE_EMAIL_ENABLE] = array(
-    '#type'          => 'checkbox',
-    '#title'         => t('Enable rerouting'),
-    '#default_value' => variable_get(REROUTE_EMAIL_ENABLE, 0),
-    '#description'   => t('Check this box if you want to enable email rerouting. Uncheck to disable rerouting.'),
-  );
-  $form[REROUTE_EMAIL_TO] = array(
-    '#type'          => 'textarea',
-    '#title'         => t('Destination email addresses'),
-    '#default_value' => reroute_email_destination(),
-    '#description'   => t('Provide a space, comma, semicolon, or newline-delimited list of email addresses to reroute email messages to.'),
-    '#states' => array(
-      'visible' => array(':input[name=reroute_email_enable]' => array('checked' => TRUE)),
-    ),
-  );
-
-  $form['whitelist'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Whitelists'),
-    '#description' => t('Permit delivery to these addresses and/or domains. Mail for non-whitelisted email addresses will be rerouted to the destination addresses above.'),
-    '#states' => array(
-      'visible' => array(':input[name=reroute_email_enable]' => array('checked' => TRUE)),
-    ),
-  );
-  $form['whitelist'][REROUTE_EMAIL_WHITELIST] = array(
-    '#type'          => 'textarea',
-    '#title'         => t('Email address whitelist'),
-    '#default_value' => variable_get(REROUTE_EMAIL_WHITELIST, REROUTE_EMAIL_DEFAULT_ADDRESS),
-    '#description'   => t('Provide a space, comma, semicolon, or newline-delimited list of email addresses to permit delivery to.'),
-    '#states' => array(
-      'visible' => array(':input[name=reroute_email_enable]' => array('checked' => TRUE)),
-    ),
-  );
-  $form['whitelist'][REROUTE_EMAIL_DOMAIN_WHITELIST] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Domain whitelist'),
-    '#default_value' => variable_get(REROUTE_EMAIL_DOMAIN_WHITELIST, ''),
-    '#description'   => t('Provide a space, comma, or semicolon-delimited list of domains to permit delivery to.'),
-    '#states' => array(
-      'visible' => array(':input[name=reroute_email_enable]' => array('checked' => TRUE)),
-    ),
-  );
-
-  $form[REROUTE_EMAIL_ENABLE_MESSAGE] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Show rerouting description in mail body'),
-    '#default_value' => variable_get(REROUTE_EMAIL_ENABLE_MESSAGE, 1),
-    '#description' => t('Check this box if you want a message to be inserted into the email body when the mail is being rerouted. Otherwise, SMTP headers will be used to describe the rerouting. If sending rich-text email, leave this unchecked so that the body of the email will not be disturbed.'),
-    '#states' => array(
-      'visible' => array(':input[name=reroute_email_enable]' => array('checked' => TRUE)),
-    ),
-  );
-
-  return system_settings_form($form);
-}
-
-/**
- * Validation callback for reroute_email_settings() form.
- */
-function reroute_email_settings_validate($form, $form_state) {
-  if ($form_state['values']['reroute_email_enable'] == TRUE) {
-    // Destination addresses
-    $destination = reroute_email_split_string($form_state['values'][REROUTE_EMAIL_TO]);
-    foreach ($destination as $address) {
-      if (!valid_email_address($address)) {
-        form_set_error(REROUTE_EMAIL_TO, t('@address is not a valid email address', array('@address' => $address)));
-      }
-    }
-    // Whitelisted addresses
-    $whitelist = reroute_email_split_string($form_state['values'][REROUTE_EMAIL_WHITELIST]);
-    foreach ($whitelist as $address) {
-      if (!valid_email_address($address)) {
-        form_set_error(REROUTE_EMAIL_WHITELIST, t('@address is not a valid email address', array('@address' => $address)));
-      }
-    }
-    // Whitelisted domains
-    $domain_whitelist = reroute_email_split_string($form_state['values'][REROUTE_EMAIL_DOMAIN_WHITELIST]);
-    foreach ($domain_whitelist as $domain) {
-      if (!valid_email_address("user@" . $domain)) {
-        form_set_error(REROUTE_EMAIL_DOMAIN_WHITELIST, t('@domain is not a valid domain', array('@domain' => $domain)));
-      }
-    }
-  }
-}
-
-/**
- * Implements hook_mail_alter() to change the destination of outgoing emails.
- * @param array $message
- *   An array containing message with keys like 'to', 'from', 'body'.
+ * Implements hook_mail_alter().
+ *
+ * This hook is required to change the destination of outgoing emails.
  */
 function reroute_email_mail_alter(&$message) {
   if (variable_get(REROUTE_EMAIL_ENABLE, 0)) {
@@ -189,47 +108,44 @@ function reroute_email_mail_alter(&$message) {
       return;
     }
 
-    $mailkey = isset($message['id']) ? $message['id'] : t('<mail id> is missing');
-    $to = isset($message['to']) ? $message['to'] : t('<to> is missing');
-
-    // Ensure we catch all Cc and Bcc headers, regardless of case,
-    // and protecting against multiple instances of the "same" header.
-    $header_keys = array();
-    foreach (array_keys($message['headers']) as $key) {
-      $header_keys[strtolower($key)][] = $key;
-    }
+    $mailkey = isset($message['id']) ? $message['id'] : t('[mail id] is missing');
+    $to = isset($message['to']) ? $message['to'] : t('[to] is missing');
 
     $message['headers']['X-Rerouted-Mail-Key'] = $mailkey;
     $message['headers']['X-Rerouted-Website'] = $base_url;
 
-    // Suppress Bcc and Cc fields otherwise email will still go out to those addresses.
-    // (We do not currently support whitelisted addresses in the Cc and Bcc fields.
-    // If the module is active, then Cc and Bcc headers will not take effect.)
-    //
-    // TODO: To, Cc, and Bcc should all be parsed as multi-address fields, and
-    // a whilelisted address should always receive the message, regardless of which
-    // header it appeared in.
-    if (!empty($header_keys['cc'])) {
-      foreach ($header_keys['cc'] as $header) {
-        $cc = $message['headers'][$header];
-        $message['headers']['X-Rerouted-Original-Cc'] = $cc;
-        unset($message['headers'][$header]);
+    // Unset Bcc and Cc fields to prevent emails from going to those addresses.
+    if (isset($message['headers']) && is_array($message['headers'])) {
+
+      // Ensure we catch all Cc and Bcc headers, regardless of case,
+      // and protecting against multiple instances of the "same" header.
+      $header_keys = array();
+      foreach (array_keys($message['headers']) as $key) {
+        $header_keys[strtolower($key)][] = $key;
       }
-    }
-    if (!empty($header_keys['bcc'])) {
-      foreach ($header_keys['bcc'] as $header) {
-        $bcc = $message['headers'][$header];
-        $message['headers']['X-Rerouted-Original-Bcc'] = $bcc;
-        unset($message['headers'][$header]);
+
+      if (!empty($header_keys['cc'])) {
+        foreach ($header_keys['cc'] as $header) {
+          $message['headers']['X-Rerouted-Original-Cc'] = $message['headers'][$header];
+          unset($message['headers'][$header]);
+        }
+      }
+      if (!empty($header_keys['bcc'])) {
+        foreach ($header_keys['bcc'] as $header) {
+          $message['headers']['X-Rerouted-Original-Bcc'] = $message['headers'][$header];
+          unset($message['headers'][$header]);
+        }
       }
     }
 
     // Check to see if the To address is whitelisted.
-    // (It is currently assumed that there is only a single address in the To header.)
+    // (It is currently assumed that there is only a single address in the To
+    // header.)
     $reroute_required = FALSE;
     $address_whitelist = reroute_email_split_string(variable_get(REROUTE_EMAIL_WHITELIST, REROUTE_EMAIL_DEFAULT_ADDRESS));
     if (!in_array($to, $address_whitelist, TRUE)) {
-      $to_domain = array_pop(explode('@', $to));
+      $to_domain = explode('@', $to);
+      $to_domain = array_pop($to_domain);
       $domain_whitelist = reroute_email_split_string(variable_get(REROUTE_EMAIL_DOMAIN_WHITELIST, ''));
       if (!in_array($to_domain, $domain_whitelist, TRUE)) {
         $reroute_required = TRUE;
@@ -241,12 +157,12 @@ function reroute_email_mail_alter(&$message) {
       $message['to'] = implode(',', reroute_email_split_string($destination));
 
       if (variable_get(REROUTE_EMAIL_ENABLE_MESSAGE, 1)) {
-        // Format a message to show at the top
+        // Format a message to show at the top.
         $msg = t("This email was rerouted.") . "\n";
         $msg .= t("Web site: @site", array('@site' => $base_url)) . "\n";
         $msg .= t("Mail key: @key", array('@key' => $mailkey)) . "\n";
         $msg .= t("Originally to: @to", array('@to' => $to)) . "\n";
-        $msg .= "-----------------------" . "\n";
+        $msg .= "-----------------------\n";
 
         // Prepend explanation message to the body of the email. This must be
         // handled differently depending on whether the body came in as a
@@ -264,60 +180,10 @@ function reroute_email_mail_alter(&$message) {
 }
 
 /**
- * Form for sending test messages.
- */
-function reroute_email_test() {
-  return array(
-    'addresses' => array(
-      '#type' => 'fieldset',
-      'to' => array(
-        '#type' => 'textfield',
-        '#title' => t('To'),
-        '#required' => TRUE,
-      ),
-      'cc' => array(
-        '#type' => 'textfield',
-        '#title' => t('Cc'),
-      ),
-      'bcc' => array(
-        '#type' => 'textfield',
-        '#title' => t('Bcc'),
-      ),
-    ),
-    'subject' => array(
-      '#type' => 'textfield',
-      '#title' => t('Subject'),
-      '#default_value' => t('Reroute Email Test'),
-    ),
-    'body' => array(
-      '#type' => 'textarea',
-      '#title' => t('Body'),
-    ),
-    'submit' => array(
-      '#type' => 'submit',
-      '#value' => 'Send email',
-    ),
-  );
-}
-
-/**
- * Submit handler for email test.
- */
-function reroute_email_test_submit(&$form, &$form_state) {
-  $to = $form_state['values']['to'];
-  $param_keys = array('cc', 'bcc', 'subject', 'body');
-  $params = array_intersect_key($form_state['values'], array_flip($param_keys));
-  $message = drupal_mail('reroute_email', 'test', $to, language_default(), $params);
-  if (!empty($message['result'])) {
-    drupal_set_message("Test email submitted for delivery.");
-  }
-}
-
-/**
  * Implements hook_mail().
  */
 function reroute_email_mail($key, &$message, $params) {
-  if ($key != 'test') {
+  if ($key != 'test_email_form') {
     return;
   }
   $message['headers']['Cc'] = $params['cc'];
