@@ -11,3 +11,6 @@ sites/*/private
 .workspace
 .buildpath
 backup
+
+# Ignore sublime project files
+*.sublime-*
