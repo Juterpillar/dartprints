@@ -5,24 +5,6 @@
  * Module for handling changes in server environments
  */
 
-if (module_exists('context')) {
-  include_once('plugins/environment.context.inc');
-}
-if (module_exists('token')) {
-  include_once('plugins/environment.token.inc');  
-}
-
-/**
- * Implementation of hook_init().
- */
-function environment_init() {
-  // Trigger environment context condition.
-  if (module_exists('context') && function_exists('context_get_plugin')
-      && $plugin = context_get_plugin('condition', 'environment')) {
-    $plugin->execute((array)variable_get('environment', array()));
-  }
-}
-
 /**
  * Implementation of hook_menu().
  */
@@ -132,7 +114,7 @@ function environment_allowed($name, $category = 'other', $default = FALSE, $work
  * @return
  *   Return messages telling what has happened.
  */
-function environment_switch($target_env, $force = FALSE) {
+function environment_switch($target_env, $force = FALSE, $clear_cache = TRUE) {
   $result = FALSE;
   $messages = array();
 
@@ -141,7 +123,7 @@ function environment_switch($target_env, $force = FALSE) {
   $current_env = environment_current($workflow);
   $override = variable_get('environment_override', '');
 
-  if ($current_env == $target_env) {
+  if (!$force && $current_env == $target_env) {
     drupal_set_message(t("The current environment is already set to '!environment'.",
                          array('!environment' => $target_env)), 'error');
     // Since this option is only available in drush, only display it to drush users.
@@ -165,8 +147,11 @@ function environment_switch($target_env, $force = FALSE) {
     else {
       environment_set($target_env);
       module_invoke_all('environment_switch', $target_env, $current_env, $workflow);
-      drupal_flush_all_caches();
-      drupal_set_message('Cleared cache.');
+
+      if ($clear_cache) {
+        drupal_flush_all_caches();
+        drupal_set_message('Cleared cache.');
+      }
       $result = TRUE;
     }
   }
@@ -202,7 +187,7 @@ function environment_current($workflow = 'default', $default = NULL, $load = FAL
     $current[$workflow] = empty($current[$workflow]) ? $default : $current[$workflow];
     return $load ? environment_load($current[$workflow]) : $current[$workflow];
   }
-  
+
   return $default;
 }
 
@@ -215,7 +200,7 @@ function environment_current($workflow = 'default', $default = NULL, $load = FAL
 function environment_set($new_env) {
   $environment = variable_get('environment', array());
   $new_state = environment_load($new_env);
-  
+
   // Maintain backwards compatibility with pre-workflow systems.
   if (!is_array($environment)) {
     $environment = array('default' => $environment);
@@ -276,7 +261,7 @@ function environment_load($env = NULL, $reset = FALSE) {
  */
 function environment_workflow_load($name = NULL, $reset = FALSE) {
   static $workflows;
-  
+
   if (empty($workflows) || $reset) {
     $workflows = module_invoke_all('environment_workflow');
     drupal_alter('environment_workflow', $workflows);
@@ -304,7 +289,7 @@ function environment_workflow_load($name = NULL, $reset = FALSE) {
  */
 function _environment_state_options($workflow = 'default', $prefix = '', $reset = FALSE) {
   static $options;
-  
+
   if (empty($options) || $reset) {
     $environments = environment_load();
     foreach ($environments as $name => $state) {
@@ -338,4 +323,33 @@ function _environment_state_options_all($reset = FALSE) {
   }
 
   return $options;
+}
+
+/**
+ * Implementation of hook_token_list().
+ */
+function environment_token_list($type = 'all') {
+  $tokens = array();
+  if ($type == 'all' || $type == 'global') {
+    foreach (environment_workflow_load() as $name => $workflow) {
+      $tokens['global']['environment_' . $name] = t('The current environment state for @title workflow.', array('@title' => $workflow['label']));
+      $tokens['global']['environment_' . $name . '-label'] = t('The human-readable version of the current environment state for @title workflow.', array('@title' => $workflow['label']));
+    }
+  }
+  return $tokens;
+}
+
+/**
+ * Implementation of hook_token_values().
+ */
+function environment_token_values($type, $object = NULL, $options = array()) {
+  $values = array();
+  if ($type == 'global') {
+    foreach (environment_workflow_load() as $name => $workflow) {
+      $state = environment_current($name, NULL, TRUE);
+      $values['environment_' . $name] = $state['name'];
+      $values['environment_' . $name . '-label'] = $state['label'];
+    }
+  }
+  return $values;
 }
