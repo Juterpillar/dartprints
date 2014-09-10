@@ -11,6 +11,12 @@ core = 7.x
 api = 2
 
 
+; Environment
+projects[environment][type] = module
+projects[environment][subdir] = catalyst
+projects[environment][version] = 1.x
+
+
 ; Rubik admin theme
 projects[rubik][type] = theme
 projects[rubik][subdir] = catalyst

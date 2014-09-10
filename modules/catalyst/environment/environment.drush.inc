@@ -26,11 +26,13 @@ function environment_drush_command() {
       'target_env' => 'The target environment to which the site will be switched.',
     ),
     'options' => array(
-      '--force' => 'Whether an environment switch should be forced if the target enviornment is the same as the current environment.',
+      'force' => 'Whether an environment switch should be forced if the target enviornment is the same as the current environment.',
+      'nocacheclear' => 'Switching environments clears the cache by default, this stops that.',
     ),
     'examples' => array(
       'drush environment-switch development' => 'Switch the environment to development.',
       'drush env-switch --force production' => 'Force the environment to switch to production even if the current environment already is production.',
+      'drush env-switch --nocacheclear production' => 'Switch environments but do not clear cache.',
     ),
     'aliases' => array('env-switch'),
   );
@@ -93,10 +95,11 @@ function drush_environment_switch($target_env = NULL) {
   }
 
   $force = drush_get_option('force');
+  $no_cache_clear = drush_get_option('nocacheclear', FALSE);
 
   drush_print(dt("Switching the environment to !environment", array('!environment' => $target_env)));
   if (!drush_get_context('DRUSH_SIMULATE')) {
-    $result = environment_switch($target_env, $force);
+    $result = environment_switch($target_env, $force, !$no_cache_clear);
   }
   else {
     $result = TRUE;
@@ -116,7 +119,7 @@ function drush_environment_switch($target_env = NULL) {
  * @param $workflow
  *  Optional; specify a single workflow whose environment to check. Otherwise
  *  show all states.
- * 
+ *
  * @return
  *  Array of strings describing the environment(s).
  */
@@ -127,16 +130,22 @@ function environment_drush_render_current($workflow = NULL) {
   }
 
   $items = array();
-  foreach ($states as $state) {
-    if (is_null($workflow) || $state['workflow'] == $workflow) {
-      if (!drush_get_context('DRUSH_PIPE')) {
-        $items[] = array(environment_drush_render_environment($state, is_null($workflow), TRUE));
-      }
-      else {
-        $items[] = $state['name'];
+  if (empty($states)) {
+    drush_log('Your site environment is not set.', 'warning');
+  }
+  else {
+    foreach ($states as $state) {
+      if (is_null($workflow) || $state['workflow'] == $workflow) {
+        if (!drush_get_context('DRUSH_PIPE')) {
+          $items[] = array(environment_drush_render_environment($state, is_null($workflow), TRUE));
+        }
+        else {
+          $items[] = $state['name'];
+        }
       }
     }
   }
+
 
   return $items;
 }
@@ -154,7 +163,7 @@ function environment_drush_render_current($workflow = NULL) {
  * @param $verbose
  *  Optional; defaults to FALSE. If TRUE, will include the environment
  *  description.
- * 
+ *
  * @return
  *  String describing the specified environment.
  */

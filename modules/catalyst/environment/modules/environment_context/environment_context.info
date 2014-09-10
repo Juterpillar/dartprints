@@ -1,9 +1,9 @@
+name = "Environment Context"
+description = "Use environment setting within context"
 core = "7.x"
 dependencies[] = "environment"
-description = "Provides a Read Only environment state"
-name = "Read Only Environment"
-recommends[] = "context"
-stylesheets[all][] = "environment_readonly.css"
+dependencies[] = "context"
+
 
 ; Information added by Drupal.org packaging script on 2014-07-26
 version = "7.x-1.x-dev"
