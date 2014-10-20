@@ -13,7 +13,7 @@ function archimedes_load_library() {
   }
   // Use the libraries module if its enabled.
   if (module_exists('libraries')) {
-    $file = libraries_get_path('archimedes') . '/archimdes.class.php';
+    $file = libraries_get_path('archimedes') . '/archimedes.class.php';
     if (file_exists($file)) {
       include_once $file;
       return TRUE;
