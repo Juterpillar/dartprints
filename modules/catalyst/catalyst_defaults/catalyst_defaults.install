@@ -10,6 +10,11 @@
 function catalyst_defaults_requirements($phase) {
   $requirements = array();
 
+  // Only run these requirement checks on the status report page.
+  if ($phase != 'runtime') {
+    return $requirements;
+  }
+
   // Ensure translations don't break during installation.
   $t = get_t();
 
@@ -19,14 +24,12 @@ function catalyst_defaults_requirements($phase) {
     'severity' => module_exists('cat_profile') ? REQUIREMENT_ERROR : REQUIREMENT_OK,
   );
 
-  if ($phase != 'install') {
-    $wr = variable_get('catalyst_defaults_maintenance_wr', FALSE);
-    $requirements['catalyst_defaults_maintenance_wr'] = array(
-      'title' => $t('WRMS Maintanance WR setup'),
-      'value' => $wr ? l('WR#' . $wr, 'https://wrms.catalyst.net.nz/' . $wr) : l($t('not set'), 'admin/config/system/catalyst'),
-      'severity' => ($phase != 'runtime') ? REQUIREMENT_INFO : ($wr ? REQUIREMENT_OK : REQUIREMENT_WARNING),
-    );
-  }
+  $wr = variable_get('catalyst_defaults_maintenance_wr', FALSE);
+  $requirements['catalyst_defaults_maintenance_wr'] = array(
+    'title' => $t('WRMS Maintanance WR setup'),
+    'value' => $wr ? l('WR#' . $wr, 'https://wrms.catalyst.net.nz/' . $wr) : l($t('not set'), 'admin/config/system/catalyst'),
+    'severity' => ($phase != 'runtime') ? REQUIREMENT_INFO : ($wr ? REQUIREMENT_OK : REQUIREMENT_WARNING),
+  );
 
   // Warn about the integrated "Poor man's cron" in drupal_page_footer().
   // Adding the entire weight of a cron run to the end of some arbitrary
