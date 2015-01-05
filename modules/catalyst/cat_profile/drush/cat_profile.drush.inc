@@ -89,10 +89,11 @@ function drush_cat_profile_core_check() {
   // Call the API
   $update_info = pm_get_project_info($projects);
   // Latest version number, likely 7.xx
-  $latest = array_shift($update_info['drupal']['releases'])['version'];
+  $latest_release = array_shift($update_info['drupal']['releases']);
+  $latest_version = $latest_release['version'];
 
-  if (version_compare(VERSION, $latest, '<')) {
-    return drush_set_error('Drupal core is version ' . VERSION . ' but ' . $latest . ' is available');
+  if (version_compare(VERSION, $latest_version, '<')) {
+    return drush_set_error('Drupal core is version ' . VERSION . ' but ' . $latest_version . ' is available');
   }
   else {
     return drush_log('Drupal core is running latest ' . VERSION . ' version', 'ok');
