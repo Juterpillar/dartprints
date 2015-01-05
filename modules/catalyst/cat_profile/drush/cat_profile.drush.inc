@@ -32,6 +32,10 @@ function cat_profile_drush_command() {
     ),
     'aliases' => array('lbd'),
   );
+  $items['core-check'] = array(
+    'description' => "Check the core version of Drupal is the latest",
+    'drupal dependencies' => array('system', 'update')
+  );
   return $items;
 }
 
@@ -62,6 +66,38 @@ function drush_cat_profile_loadbalance_disable() {
     return drush_set_error("Cannot unlink file path: $filepath. Load balanceing cannot be disabled.");
   }
   drush_log("Load balancing disabled", 'success');
+}
+
+/**
+ * Check to see if core is the latest version
+ */
+function drush_cat_profile_core_check() {
+
+  // Needed to call out to the Drupal.org version API
+  drush_include_engine('update_info', 'drupal', NULL, DRUSH_BASE_PATH . '/commands/pm/update_info');
+
+  // Just checking the core project
+  $projects = array(
+    'drupal' => array(
+      'label' => 'Drupal',
+      'version' => VERSION,
+      'type' => 'core',
+      'extensions' => array(),
+    )
+  );
+
+  // Call the API
+  $update_info = pm_get_project_info($projects);
+  // Latest version number, likely 7.xx
+  $latest = array_shift($update_info['drupal']['releases'])['version'];
+
+  if (version_compare(VERSION, $latest, '<')) {
+    return drush_set_error('Drupal core is version ' . VERSION . ' but ' . $latest . ' is available');
+  }
+  else {
+    return drush_log('Drupal core is running latest ' . VERSION . ' version', 'ok');
+  }
+
 }
 
 /**
