@@ -355,3 +355,47 @@ function catalyst_defaults_archimedes_alter(&$owl) {
     }
   }
 }
+
+/**
+ * Implements hook_mail_alter().
+ *
+ * This is for email logging purposes.
+ *
+ * Only do the logging for new user registration and reset password.
+ */
+function catalyst_defaults_mail_alter(&$message) {
+  $msg = '';
+  $account = isset($message['params']['account']) ? $message['params']['account'] : NULL;
+
+  // Only do the logging for password reset or user registration.
+  if ($account && isset($account->name)) {
+    switch ($message['key']) {
+      case 'password_reset':
+        $msg = t('Password reset was requested for %user and',
+          array(
+            '%user' => $account->name,
+          )
+        );
+        break;
+
+      case 'register_no_approval_required':
+      case 'register_admin_created':
+      case 'register_pending_approval':
+      case 'register_pending_approval_admin':
+        $msg = t('New user registration for %new_user,',
+          array(
+            '%new_user' => $account->name,
+          )
+        );
+        break;
+    }
+
+    // Add logging here.
+    $msg .= t(' email will be sent to: %destination. Message key: %message_key');
+    $msg_params = array(
+      '%destination' => $message['to'],
+      '%message_key' => $message['key'],
+    );
+    watchdog('catalyst_defaults', $msg, $msg_params, WATCHDOG_INFO);
+  }
+}
