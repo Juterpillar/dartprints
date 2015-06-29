@@ -20,9 +20,6 @@ function catalyst_form_install_configure_form_alter(&$form, $form_state) {
   $form['site_information']['site_name']['#default_value'] = $_SERVER['SERVER_NAME'];
   $form['site_information']['site_mail']['#default_value'] = 'no-reply@' . $_SERVER['SERVER_NAME'];
 
-  $form['admin_account']['account']['name']['#default_value'] = 'admin';
-  $form['admin_account']['account']['name']['#disabled'] = TRUE;
-
   $form['server_settings']['site_default_country']['#default_value'] = 'NZ';
   $form['server_settings']['#collapsible'] = TRUE;
   $form['server_settings']['#collapsed'] = TRUE;
