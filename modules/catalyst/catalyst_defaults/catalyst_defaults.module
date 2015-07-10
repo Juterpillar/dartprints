@@ -54,8 +54,10 @@ function catalyst_defaults_menu_alter(&$registry) {
   }
 
   // Get rid of other pages that Drupal adds that we never use.
-  unset($registry['filter/tips']);
-  unset($registry['rss.xml']);
+  $paths = variable_get('catalyst_defaults_unused_paths', array('filter/tips', 'rss.xml'));
+  foreach ($paths as $path) {
+    unset($registry[$path]);
+  }
 }
 
 /**
