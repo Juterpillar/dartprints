@@ -32,8 +32,9 @@ function _cat_profile_delete_field($entity_type, $bundle_name, $field_name) {
 /**
  * Helper function for enabling modules.
  *
- * @param text $modulenames
+ * @param string|array $modulenames
  *   The name of the module, either an array of text or just text.
+ * @throws DrupalUpdateException
  */
 function _cat_profile_enable_module($modulenames) {
   $modules = is_array($modulenames) ? $modulenames : array($modulenames);
