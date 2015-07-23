@@ -90,7 +90,6 @@ function catalyst_defaults_form_install_configure_form_alter(&$form, $form_state
     $form['site_information']['environment'] = $env_form['environment'];
     $form['environment_require_override']['#type'] = 'hidden';
     $form['environment_require_override']['#value'] = FALSE;
-    $form['#submit'][] = $env_form['#submit'][0];
   }
 
   $form['#submit'][] = 'catalyst_defaults_install_configure_form_submit';
