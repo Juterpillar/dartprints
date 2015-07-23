@@ -102,7 +102,7 @@ function catalyst_defaults_install_configure_form_submit($form, $form_state) {
   variable_set('catalyst_defaults_maintenance_wr', $form_state['values']['catalyst_defaults_maintenance_wr']);
 
   if (module_exists('environment')) {
-    environment_switch($form_state['values']['environment']['default']);
+    environment_switch($form_state['values']['environment']['default'], TRUE);
   }
 }
 
