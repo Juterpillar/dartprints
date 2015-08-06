@@ -4,3 +4,13 @@ sites/*/settings*.php
 # Ignore paths that contain user-generated content.
 sites/*/files
 sites/*/private
+*~
+*.swp
+.settings
+.project
+.workspace
+.buildpath
+backup
+
+# Ignore sublime project files
+*.sublime-*

@@ -1,0 +1,402 @@
+<?php
+/**
+ * @file
+ * Catalyst defaults module file.
+ */
+
+/**
+ * Implements hook_init().
+ */
+function catalyst_defaults_init() {
+  global $conf;
+  // Turn off nagios checks through the web interface.
+  $conf['nagios_enable_nagios'] = 0;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function catalyst_defaults_menu() {
+  $items = array();
+  $items['admin/config/system/catalyst'] = array(
+    'title' => '@site_name settings',
+    'title arguments' => array('@site_name' => variable_get('site_name', 'Catalyst')),
+    'description' => t('Site specific configuration custom built for @site_name', array('@site_name' => variable_get('site_name', 'Catalyst'))),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('catalyst_defaults_settings_form'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'catalyst_defaults.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  // This is so that other custom modules may add additional tabs to the system
+  // settings though by default this tab will not show.
+  $items['admin/config/system/catalyst/defaults'] = array(
+    'title' => 'General',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function catalyst_defaults_menu_alter(&$registry) {
+  // Remove /node menu item as its never used.
+  if (isset($registry['node'])) {
+    unset($registry['node']);
+
+    // Also check that the frontpage isn't node and if it is, set it to /user.
+    if (variable_get('site_frontpage', 'node') == 'node') {
+      variable_set('site_frontpage', 'user');
+    }
+  }
+
+  // Get rid of other pages that Drupal adds that we never use.
+  $paths = variable_get('catalyst_defaults_unused_paths', array('filter/tips', 'rss.xml'));
+  foreach ($paths as $path) {
+    unset($registry[$path]);
+  }
+}
+
+/**
+ * Implements hook_form_install_configure_form_alter().
+ */
+function catalyst_defaults_form_install_configure_form_alter(&$form, $form_state) {
+  $form['site_information']['catalyst_defaults_maintenance_wr'] = array(
+    '#title' => t('WRMS maintenance work request'),
+    '#description' => t('This should be the number of the WR that will be used to administer Drupal maintenance by Catalyst to this site. You must have %perm to be able to configure this settings.', array(
+      '%perm' => t('Administer software updates'),
+    )),
+    '#default_value' => variable_get('catalyst_defaults_maintenance_wr', ''),
+    '#element_validate' => array('element_validate_number'),
+    '#size' => 8,
+    '#field_prefix' => t('WR#'),
+    '#type' => 'textfield',
+  );
+
+  // Present the environment module form on the installation form
+  // so that the environment is set right at the beginning.
+  if (module_exists('environment')) {
+    module_load_include('inc', 'environment', 'environment.admin');
+    $env_form = environment_admin_settings();
+
+    unset($env_form['environment']['#type']);
+    unset($env_form['environment']['#title']);
+
+    $env_form['environment']['default']['#required'] = TRUE;
+
+    $form['site_information']['environment'] = $env_form['environment'];
+    $form['environment_require_override']['#type'] = 'hidden';
+    $form['environment_require_override']['#value'] = FALSE;
+  }
+
+  $form['#submit'][] = 'catalyst_defaults_install_configure_form_submit';
+}
+
+/**
+ * Form submission callback: install_configure_form.
+ */
+function catalyst_defaults_install_configure_form_submit($form, $form_state) {
+  variable_set('catalyst_defaults_maintenance_wr', $form_state['values']['catalyst_defaults_maintenance_wr']);
+
+  if (module_exists('environment')) {
+    environment_switch($form_state['values']['environment']['default'], TRUE);
+  }
+}
+
+/**
+ * Implements hook_environment().
+ */
+function catalyst_defaults_environment() {
+  $environments = array();
+  $environments['staging'] = array(
+    'label' => t('Staging'),
+    'description' => t('Staging sites are for content creation before publication.'),
+    'allowed' => array(
+      'default' => FALSE,
+    ),
+  );
+  $environments['uat'] = array(
+    'label' => t('UAT'),
+    'description' => t('UAT sites are for user acceptance testing.'),
+    'allowed' => array(
+      'default' => FALSE,
+    ),
+  );
+  $environments['dr'] = array(
+    'label' => t('Disaster Recovery'),
+    'description' => t('Disaster recovery installation of a production site.'),
+    'allowed' => array(
+      'default' => FALSE,
+    ),
+  );
+  $environments['ci'] = array(
+    'label' => t('Continuous Integration'),
+    'description' => t('CI Environment e.g. Jenkins'),
+    'allowed' => array(
+      'default' => FALSE,
+    ),
+  );
+  $environments['preproduction'] = array(
+    'label' => t('Pre-Production'),
+    'description' => t('The production environment prior to going live.'),
+    'allowed' => array(
+      'default' => FALSE,
+    ),
+  );
+  return $environments;
+}
+
+/**
+ * Implements hook_environment_alter().
+ *
+ * Create an environmental configuration appended to each environment array.
+ */
+function catalyst_defaults_environment_alter(&$environments) {
+  // Initialize a conf array for each environment.
+  $env_conf = array();
+  foreach (array_keys($environments) as $name) {
+    $env_conf[$name] = array();
+
+    // Turn on aggregation by default.
+    $env_conf[$name]['preprocess_css'] = 1;
+    $env_conf[$name]['preprocess_js'] = 1;
+  }
+
+  // Development shouldn't preprocess css or js.
+  $env_conf['development']['preprocess_css'] = 0;
+  $env_conf['development']['preprocess_js'] = 0;
+
+  // Allow local conf to be set.
+  $env_conf_include = DRUPAL_ROOT . '/' . conf_path() . '/conf.settings.php';
+  if (file_exists($env_conf_include)) {
+    include $env_conf_include;
+  }
+
+  foreach ($env_conf as $env_name => $conf) {
+    // Allow modules to alter the configuration.
+    drupal_alter(array('catalyst_defaults_environment_conf', 'catalyst_defaults_environment_'  . $env_name . '_conf'), $conf);
+    $environments[$env_name]['conf'] = (object) $conf;
+  }
+}
+
+/**
+ * Implements hook_environment_switch().
+ *
+ * Set the css/js aggregation settings for the environment.
+ */
+function catalyst_defaults_environment_switch($target_env, $current_env, $workflow = NULL) {
+  $environment = environment_load($target_env);
+
+  // Set aggregation of css files.
+  if (isset($environment['conf']->preprocess_css)) {
+    variable_set('preprocess_css', $environment['conf']->preprocess_css);
+  }
+
+  // Set aggregation of js files.
+  if (isset($environment['conf']->preprocess_js)) {
+    variable_set('preprocess_js', $environment['conf']->preprocess_js);
+  }
+
+  // Enable and disable environment-specific modules.
+  _catalyst_defaults_environment_switch_modules($target_env, $current_env);
+}
+
+/**
+ * Enable and disable environment-specific modules as appropriate.
+ *
+ * When catalyst_defaults_environment_switch() is called.
+ *
+ * A module which is only wanted in SOME environments should be listed
+ *
+ * against each of those environments. This can be configured in the
+ *
+ * settings files. e.g.:
+ *
+ * $conf['catalyst_environment_modules'] = array(
+ *   'development' => array(
+ *     'devel', 'update', 'coder', 'coder_review', 'simpletest',
+ *   ),
+ *   'staging' => array(
+ *     'devel',
+ *   ),
+ *   // 'uat'
+ *   // 'dr'
+ *   // 'ci'
+ *   // 'preproduction'
+ *   // 'production'
+ * );
+ *
+ * Any module appearing in this variable will be disabled when switching to
+ * an environment which does not list it. All modules listed for the target
+ * environment will be enabled.
+ */
+function _catalyst_defaults_environment_switch_modules($target_env, $current_env) {
+  $modules = variable_get('catalyst_environment_modules', array());
+  if (!$modules) {
+    return;
+  }
+  $modules += array($current_env => array(), $target_env => array());
+  $all_envs = array_unique(array_reduce($modules, 'array_merge', array()));
+
+  // Disable any currently-enabled modules which are listed for at least one
+  // of the environments, but NOT for the target environment.
+  $disable = array_intersect(
+    module_list(),
+    array_diff($all_envs, $modules[$target_env])
+  );
+
+  // Enable all modules for the target environment which are not currently
+  // enabled.
+  $enable = array_diff($modules[$target_env], module_list());
+
+  if ($disable) {
+    $args = array('@target' => $target_env, '@list' => implode(', ', $disable));
+    drupal_set_message(t('Disabling non-@target modules: @list', $args));
+    module_disable($disable);
+
+    if ($enabled = array_intersect($disable, module_list())) {
+      $args = array('@list' => implode(', ', $enabled));
+      drupal_set_message(t('Failed to disable modules: @list', $args), 'warning');
+    }
+  }
+
+  if ($enable) {
+    $args = array('@target' => $target_env, '@list' => implode(', ', $enable));
+    drupal_set_message(t('Enabling @target modules: @list', $args));
+    module_enable($enable);
+
+    if ($disabled = array_diff($enable, module_list())) {
+      $args = array('@list' => implode(', ', $disabled));
+      drupal_set_message(t('Failed to enable modules: @list', $args), 'warning');
+    }
+  }
+}
+
+/**
+ * Implements hook_archimedes_alter().
+ *
+ * Add addional fields into the archimedes export.
+ */
+function catalyst_defaults_archimedes_alter(&$owl) {
+  // Non-Linux stuff is not supported yet.
+  if (PHP_OS != "Linux") {
+    return;
+  }
+
+  // Add WRMS information.
+  if ($wr = variable_get('catalyst_defaults_maintenance_wr', FALSE)) {
+    $field = $owl->createField('field_wrms_maint', $wr);
+  }
+
+  // If Git is present on the server, the Drupal site may
+  // be deployed via Git so check if a remote exists.
+  if (file_exists(DRUPAL_ROOT . '/.git/config') && $git_shell = trim(`which git`)) {
+
+    // Get a list of push-able git remotes to record.
+    if ($remotes = trim(`$git_shell remote -v | grep '(push)'`)) {
+
+      // Create a field on the report and attach each repo as a value.
+      $field_values = array();
+      foreach (explode(PHP_EOL, $remotes) as $remote_data) {
+        $remote = array_filter(preg_split('/\t|\s/', $remote_data));
+        $field_values[] = archimedes_value($remote[1], 'gitrepo')->setRemoteName($remote[0]);
+      }
+      $field = $owl->createField('field_git_repo', $field_values)->invokeFacet();
+    }
+
+    // Add Git hash data.
+    if ($hash = trim(`git rev-list HEAD -1`)) {
+      $field = $owl->createField('field_git_hash', $hash);
+    }
+
+  }
+  // If the Drupal root is deployed to a known scheme then we can extract
+  // information from it.
+  if (preg_match_all('#^/var/www/drupal/([^/]+)/releases/([^/]+)$#', DRUPAL_ROOT, $matches)) {
+    $owl->createField('field_tag', $matches[2][0]);
+    $owl->createField('field_name', $matches[1][0]);
+  }
+  // We can also check for debian package ini.
+  elseif ($version = variable_get('dpkg_version', FALSE)) {
+    // Add debian package.
+    $field = $owl->createField('field_tag', $version)
+                 ->invokeFacet();
+  }
+
+  // Search and add Catalyst users to the report as this will allow us
+  // To link Catalyst users with sites for the purpose of maintenance.
+  $addresses = db_select('users', 'u')
+    ->fields('u', array('mail'))
+    ->condition('status', 1)
+    ->condition('uid', 1, '<>')
+    ->condition('mail', '%catalyst.net.nz', 'LIKE')
+    ->execute()
+    ->fetchCol();
+
+  if (!empty($addresses)) {
+    $field = $owl->createField('field_users');
+    // Remove the '+' out of the email address. This is often used to create
+    // aliases for testers and developers. After that, we may have duplicate
+    // email address so we wrap this in array_unique to prevent it.
+    $addresses = array_unique(array_map(function ($email) {
+      return preg_replace('/(\+.*)(?=@)/', '', $email);
+    }, $addresses));
+
+    foreach ($addresses as $email) {
+      $user = array(
+        'type' => 'mail',
+        'mailto' => 'mailto:' . $email,
+      );
+      $value = archimedes_value($user['mailto'], 'userreference')
+                ->addUser($user);
+      $field->addValue($value);
+    }
+  }
+}
+
+/**
+ * Implements hook_mail_alter().
+ *
+ * This is for email logging purposes.
+ *
+ * Only do the logging for new user registration and reset password.
+ */
+function catalyst_defaults_mail_alter(&$message) {
+  $msg = '';
+  $account = isset($message['params']['account']) ? $message['params']['account'] : NULL;
+
+  // Only do the logging for password reset or user registration.
+  if ($account && isset($account->name)) {
+    switch ($message['key']) {
+      case 'password_reset':
+        $msg = t('Password reset was requested for %user and',
+          array(
+            '%user' => $account->name,
+          )
+        );
+        break;
+
+      case 'register_no_approval_required':
+      case 'register_admin_created':
+      case 'register_pending_approval':
+      case 'register_pending_approval_admin':
+        $msg = t('New user registration for %new_user,',
+          array(
+            '%new_user' => $account->name,
+          )
+        );
+        break;
+    }
+
+    // Add logging here.
+    $msg .= t(' email will be sent to: %destination. Message key: %message_key');
+    $msg_params = array(
+      '%destination' => $message['to'],
+      '%message_key' => $message['key'],
+    );
+    watchdog('catalyst_defaults', $msg, $msg_params, WATCHDOG_INFO);
+  }
+}

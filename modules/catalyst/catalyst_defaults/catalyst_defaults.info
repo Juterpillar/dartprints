@@ -1,0 +1,6 @@
+name = Catalyst Default
+description = Provides Drupal tweaks that are commonly used in Catalyst projects.
+core = 7.x
+package = Catalyst
+dependencies[] = environment
+dependencies[] = archimedes

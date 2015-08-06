@@ -565,3 +565,14 @@ $conf['404_fast_html'] = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN"
  * Remove the leading hash signs to disable.
  */
 # $conf['allow_authorize_operations'] = FALSE;
+
+// Include config that is common to dev and prod (Catalyst thing)
+if (file_exists('settings.common.php')) {
+  require 'settings.common.php';
+}
+else if (file_exists('./sites/default/settings.common.php')) {
+  require './sites/default/settings.common.php';
+}
+else if (file_exists('./sites/all/settings.common.php')) {
+  require './sites/default/settings.common.php';
+}

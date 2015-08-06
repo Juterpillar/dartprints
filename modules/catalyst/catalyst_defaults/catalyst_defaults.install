@@ -1,0 +1,79 @@
+<?php
+/**
+ * @file
+ * Catalyst defaults install file.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function catalyst_defaults_requirements($phase) {
+  $requirements = array();
+
+  // Only run these requirement checks on the status report page.
+  if ($phase != 'runtime') {
+    return $requirements;
+  }
+
+  // Ensure translations don't break during installation.
+  $t = get_t();
+
+  $requirements['no_cat_profile'] = array(
+    'title' => $t('Cat Profile not installed'),
+    'value' => $t('Catalyst Defaults conflicts with the deprecated Cat Profile module.'),
+    'severity' => module_exists('cat_profile') ? REQUIREMENT_ERROR : REQUIREMENT_OK,
+  );
+
+  $wr = variable_get('catalyst_defaults_maintenance_wr', FALSE);
+  $requirements['catalyst_defaults_maintenance_wr'] = array(
+    'title' => $t('WRMS Maintanance WR setup'),
+    'value' => $wr ? l('WR#' . $wr, 'https://wrms.catalyst.net.nz/' . $wr) : l($t('not set'), 'admin/config/system/catalyst'),
+    'severity' => ($phase != 'runtime') ? REQUIREMENT_INFO : ($wr ? REQUIREMENT_OK : REQUIREMENT_WARNING),
+  );
+
+  // Warn about the integrated "Poor man's cron" in drupal_page_footer().
+  // Adding the entire weight of a cron run to the end of some arbitrary
+  // preceding request is just asking to exceed the memory limits.
+  // Catalyst-hosted sites certainly should not have this enabled.
+  // @see system_run_automated_cron()
+  // @see drupal_page_footer()
+  // @see catalyst_defaults_settings_form()
+  if (variable_get('cron_safe_threshold', DRUPAL_CRON_DEFAULT_THRESHOLD) > 0
+    && variable_get('catalyst_defaults_automated_cron_warning', TRUE)) {
+    $requirements['catalyst_defaults_automated_cron'] = array(
+      'title' => $t("Automated cron"),
+      'description' => $t("This mechanism is Drupal's way of running its cron hooks periodically, even if no genuine cron task exists to do so, and it is enabled by default. If a genuine cron task has been configured, then you do <strong>not</strong> want the automated cron.")
+      . '<p>' . $t("To disable automated cron, !administer_settings and set 'Run cron every' to 'Never'.", array('!administer_settings' => l("administer cron settings", 'admin/config/system/cron')))
+      . '<br/>' . $t("Consider hard-coding this by updating the settings file with: <code>\$conf['cron_safe_threshold'] = 0;</code>") . '</p>'
+      . '<p>' . $t("Details: <code>drupal_page_footer()</code> runs <code>system_run_automated_cron()</code> based on the <code>cron_safe_threshold</code> variable. This means that the full weight of a cron run is added to whichever requests happen to trigger it, potentially causing poor response times and unexpected memory usage spikes, and perhaps exceeding the memory limits if the request in question happened to be a heavy one to begin with.") . '</p>'
+      . '<p>' . $t("This warning message can be disabled via the !catalyst_defaults form.", array('!catalyst_defaults' => l("Catalyst Defaults settings", 'admin/config/system/catalyst'))) . '</p>',
+      'value' => $t("Enabled. Which is bad."),
+      'severity' => REQUIREMENT_WARNING,
+    );
+  }
+
+  if (function_exists('environment_load')) {
+    $environment = environment_load(environment_current());
+    // We deploy Drupal code bases to servers without cron.php, install.php or
+    // update.php. So if the environment is set as Production and any one of
+    // these files exists, its possible that this isn't actually a production
+    // environment. One of two things should happen in this case; If the
+    // environment is actually a development environment then the developer
+    // should switch the environment to the correct environment. If this is
+    // a production environment then they should remove the files.
+    $black_files = array_filter(array('cron.php', 'install.php', 'update.php'), 'file_exists');
+    if (count($black_files) && environment_current() != 'development') {
+      $requirements['bad_files'] = array(
+        'title' => $t('Environment incorrectly set'),
+        'value' => $environment['label'],
+        'severity' => REQUIREMENT_ERROR,
+        'description' => $t('This environment is set to @environment but has been deployed with @bad_files which are prohibited in Catalyst deployed Drupal sites. If the environment is correctly set, please remove the prohibited files. Otherwise please set the environment correctly to development.', array(
+          '@environment' => $environment['label'],
+          '@bad_files' => implode(', ', $black_files),
+        )),
+      );
+    }
+  }
+
+  return $requirements;
+}
